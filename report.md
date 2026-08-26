@@ -2,7 +2,7 @@
 
 ## Overall Status
 
-Phase 1 — Target Architecture & Requirements is conceptually complete, and all Phase 1 business decisions are approved. Phase 2 detailed data/API design may begin; neither target application should be initialized in Phase 2. No application implementation has started.
+Phase 1 — Target Architecture & Requirements is complete, and all Phase 1 business decisions are approved. Phase 2A — Technical Foundation & Product Schema Design is complete and awaiting review. The Product/Catalog technical foundation is implementation-ready subject to the stated production validations, but neither target repository is authorized for initialization. No application implementation has started.
 
 ## Current Architecture
 
@@ -21,7 +21,7 @@ Status: Complete
 Status: Complete
 
 ### Phase 2 — Detailed Data & API Design
-Status: Ready to Start
+Status: In Progress — Phase 2A design complete; Phase 2B is next
 
 ### Phase 3 — Build Vastriqo API & Database Foundation
 Status: Not Started
@@ -54,6 +54,7 @@ Status: Not Started
 - Completed `PRODUCT-CATALOG-DESIGN.md`, including the product/variant/media/attribute conceptual slice and source mapping.
 - Completed `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` across catalog, merchandising, inventory, identity, wishlist, cart, checkout, orders, provider boundaries, admin, migration, API, and database design.
 - Completed `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`, reconciling all earlier unresolved items and closing the Phase 1 gate.
+- Completed `PHASE-2A-TECHNICAL-FOUNDATION-AND-PRODUCT-SCHEMA.md`, selecting the API/admin/database foundations and defining the implementation-ready physical Product/Catalog, minimum Inventory, merchandising projection, handle and import-control schema.
 - Resolved the target as a strict-TypeScript modular monolith with a dedicated transactional relational database, native Vastriqo identities, separate public/customer/admin/integration boundaries, deterministic imports, and no final Shopify/BMS core dependency.
 - Created this living progress report for implementation status and next-step tracking.
 
@@ -71,22 +72,27 @@ Status: Not Started
 - Current BMS newsletter subscribers and support/inquiry records will not migrate.
 - Cancellation, refund, return, exchange and customer-visible tracking remain required future capabilities, designed progressively in the relevant post-purchase phase rather than copied from broken current behavior.
 - Product/Catalog remains the first migration and implementation vertical, including required variants, options, attributes/specifications, media, pricing, publication, inventory/availability and collection/merchandising data.
+- `vastriqo-api` will use Node.js 24 LTS, TypeScript 6, NestJS 11 on Express 5, PostgreSQL 18, Kysely, native ESM, OpenAPI, structured logging and real-PostgreSQL integration tests.
+- `vastriqo-admin` will use Next.js 16 App Router, React 19, TypeScript 6, Ant Design 6, TanStack Query 5, generated OpenAPI clients, React Hook Form/Zod and a same-origin BFF/session boundary.
+- Native money is stored as signed 64-bit minor units plus ISO currency; public/admin decimal values cross the API as strings with explicit currency.
+- Native UUIDv7 identifiers, a collision-free Product handle/alias namespace, typed external-source mappings, strict aggregate invariants and location-aware inventory replace Shopify/BMS identity and schema coupling.
 
 ## Approved Business Decisions and Remaining Validation
 
 The authoritative register is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. No Phase 1 business decision remains unresolved. Existing test-era customers, addresses, wishlists, orders, inquiries and newsletter records are explicitly outside migration scope. No broad legal/financial historical migration is required.
 
-Production validation has **not** been completed. Product/catalog, collection, inventory and current provider/configuration inspections remain scheduled checkpoints, not Phase 1 blockers. Exact framework/database/version, identifier/money/session, deployment/security, testing/observability and admin-UI choices belong to Phase 2 detailed design. Detailed legal/tax/privacy/consent and post-purchase workflows are decided at their relevant later implementation checkpoints.
+Production validation has **not** been completed. Product/catalog, collection, inventory and PostgreSQL deployment inspections remain scheduled checkpoints. Phase 2A has now resolved the framework/database baseline, identifiers, money representation, Product/Catalog schema, admin foundation, testing/observability conventions and initial session boundary. Hosting/provider choices and detailed legal/tax/privacy/consent and post-purchase workflows remain for their relevant later design checkpoints.
 
 ## Implementation Gates
 
-- No blocker prevents Phase 2 detailed design from starting.
-- The separate `vastriqo-api` and `vastriqo-admin` repositories do not exist; this is intentional. They must not be initialized until the applicable Phase 2 detailed designs and repository prerequisites are approved.
-- Production validations must complete before their affected schema/import/integration contracts are frozen, as listed in the closure register §20.
+- Phase 2A is ready for review; its technical foundation is sufficient to initialize `vastriqo-api` after explicit approval and authorization.
+- The separate `vastriqo-api` and `vastriqo-admin` repositories do not exist; this is intentional. This documentation task does not authorize either repository to be created.
+- `vastriqo-admin` initialization should wait for Phase 2B's reviewed Product OpenAPI and admin-session contracts so its initial structure is contract-driven.
+- Production validations in the Phase 2A design §21 must complete before affected schema/import constraints are frozen. They are not permission to read or modify production data during this task.
 
 ## Next Step
 
-- Begin Phase 2 detailed design using the final closure register, with Product/Catalog as the first implementation vertical: ADRs, physical relational schema, OpenAPI/security contracts, lifecycle/concurrency sequences, provider boundaries, field-level migration/reconciliation specifications, admin workflows and validation checkpoints. Do not initialize either target repository or implement code in Phase 2.
+- Review and approve Phase 2A, then execute Phase 2B Product/Catalog contract and delivery design: versioned OpenAPI contracts, command/concurrency sequences, field-level import/reconciliation rules, media contract, admin workflows, session/CSRF/permission threat model, acceptance tests and authorized read-only production validation. Do not initialize either target repository or implement application code without separate authorization.
 
 ## Change Log
 
@@ -109,3 +115,7 @@ Production validation has **not** been completed. Product/catalog, collection, i
 - Closed Phase 1 and marked Phase 2 detailed design ready to start without authorizing application/repository initialization.
 - Recorded the final clean-start business decisions: no migration of current test customers, credentials, addresses, wishlists, orders, inquiries or newsletter records; no dedicated test-order archive; and no broad legal/financial history migration.
 - Confirmed required future post-purchase capabilities remain in scope for progressive later-phase design and that Product/Catalog remains the first implementation vertical.
+- Completed Phase 2A technical design without creating repositories, code, migrations, packages, databases or external configuration.
+- Selected the API/admin/database/tooling baseline and documented why useful current-repository conventions are retained while BMS coupling and unsafe legacy patterns are rejected.
+- Defined the physical Product/Catalog, Collection, minimum Inventory, projection, handle and deterministic import-control schema, including constraints, indexes, transactions, read/write paths and admin ownership.
+- Recorded remaining production validations, bounded schema risks, deferred choices, the `vastriqo-api` review/authorization gate and the additional Phase 2B contract prerequisite for `vastriqo-admin`.
