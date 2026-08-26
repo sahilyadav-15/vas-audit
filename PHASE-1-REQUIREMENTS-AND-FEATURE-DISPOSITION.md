@@ -1,7 +1,7 @@
 # Phase 1 — Vastriqo Requirements and Feature Disposition
 
 Date: 2026-08-24; closure reconciliation recorded 2026-08-26 (Asia/Kolkata)
-Status: **Requirements baseline complete; unresolved items reclassified by the Phase 1 closure register**
+Status: **Requirements baseline complete; all Phase 1 business decisions resolved by the closure register**
 Scope: requirements and feature decisions only; no implementation, schema, endpoint, migration-script, provider, or infrastructure design
 
 ## 1. Purpose and Status
@@ -18,7 +18,7 @@ This is Phase 1 requirements and feature-disposition work. It distinguishes:
 
 It is not an implementation plan. It does not choose frameworks, physical tables, endpoints, providers, deployment topology, or detailed state machines. No application source, configuration, dependency, database, Shopify data, or BMS data is changed by this work.
 
-`PRODUCT-CATALOG-DESIGN.md` and `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` continue this baseline into the product vertical slice and full commerce conceptual architecture. `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` is now authoritative for final A–E classifications, remaining business decisions and Phase 1 readiness.
+`PRODUCT-CATALOG-DESIGN.md` and `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` continue this baseline into the product vertical slice and full commerce conceptual architecture. `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` is now authoritative for final A–E classifications, final business-decision resolutions and Phase 1 readiness.
 
 ### Evidence and decision notation
 
@@ -146,7 +146,7 @@ Shopify may be a controlled temporary dependency during migration. Routing store
 | Customer | Default address | Shopify owns the relation. | Audit §§3–4 | REPLACE | Customers must be able to select a default address if address book is retained. | Checkout override behavior belongs to design. |
 | Identity | Account recovery | Delegated to Shopify/not established in app source. | Direction §§1–2; task direction | REPLACE | Independent email/password accounts require a recovery flow. | Channel, expiry, and support process are later design. |
 | Identity | Verification | Shopify customer state is queried; independent policy is not defined. | Audit §§4, 14; task direction | REPLACE | Independent identity must support an approved verification lifecycle. | Whether verification is mandatory before purchase NEEDS BUSINESS INPUT. |
-| Customer | Wishlist | BMS stores Shopify product/customer references and snapshots. | Audit §§3, 5 | PRESERVE + IMPROVE | Preserve saved products using Vastriqo identities and pending-login behavior. | Retention/migration depends on customer approval. |
+| Customer | Wishlist | BMS stores Shopify product/customer references and snapshots. | Audit §§3, 5 | PRESERVE + IMPROVE | Preserve saved products using new Vastriqo identities and pending-login behavior. | Existing BMS wishlist rows do not migrate. |
 | Support | Inquiry/contact | Public/optional-auth form writes BMS inquiries. | Audit §§3, 5 | PRESERVE + IMPROVE | Preserve inquiry submission with correct customer linkage and support handling. | File attachments are UNDECIDED. |
 | Support | Inquiry history | Hidden from account nav and has an identity-type mismatch. | Audit §§3, 13 | UNDECIDED | Decide whether customers need inquiry history; if retained, redesign ownership. | NEEDS BUSINESS INPUT. |
 | Engagement | Newsletter | BMS records normalized email/source; duplicates succeed. | Audit §§3, 5 | PRESERVE + IMPROVE | Preserve subscription capture with explicit status, consent, source, and unsubscribe policy. | Existing consent quality NEEDS DATA VALIDATION. |
@@ -168,7 +168,7 @@ Shopify may be a controlled temporary dependency during migration. Routing store
 | Checkout | Payment | Shopify hosted checkout owns methods/results. | Audit §§1, 3–4 | REPLACE | Vastriqo must own the payment integration boundary, state, verification, and reconciliation. | Provider/methods/COD are UNDECIDED. |
 | Checkout | Order creation | Shopify creates retail orders. | Audit §§1–4 | REPLACE | Create exactly one durable order from an accepted checkout with immutable purchase snapshots. | Detailed state machine belongs to Phase 2. |
 | Checkout | Idempotency | Hidden inside Shopify; no independent behavior exists. | Audit §§9–10 | REPLACE | Inferred requirement: retries/callbacks must not create duplicate orders or charges. | Keys/transactions are design details. |
-| Orders | Order history | Latest 10 Shopify orders are shown live. | Audit §3 | PRESERVE + IMPROVE | Customers must see paginated history for new Vastriqo orders. | Historical Shopify order treatment is UNDECIDED. |
+| Orders | Order history | Latest 10 Shopify orders are shown live. | Audit §3 | PRESERVE + IMPROVE | Customers must see paginated history for new Vastriqo orders. | Current test orders do not migrate and receive no dedicated archive. |
 | Orders | Order detail | Current cards show order, money, line, payment gateway, and shipping summary. | Audit §3 | PRESERVE + IMPROVE | Provide authorized order detail with complete approved status and snapshots. | Detail depth depends on fulfillment/returns policies. |
 | Orders | Order status | Shopify financial/fulfillment strings are displayed. | Audit §3 | REPLACE | Define Vastriqo-owned order, payment, and fulfillment status semantics. | Exact states/transitions belong to Phase 2 after policy approval. |
 | Orders | Order items | Shopify lines provide title/variant/quantity/price/image. | Audit §3 | REPLACE | Persist immutable item, variant/options, quantity, price, tax, and media/title snapshots needed for history. | SKU snapshot depends on SKU decision. |
@@ -300,7 +300,7 @@ The future catalog represents Vastriqo's business concepts, not Shopify resource
 - Address book supports the current address concepts and a default address. Supported countries, required fields, validation, and whether admins may edit addresses need business/security input.
 - Wishlist remains a customer/product relationship using Vastriqo identities.
 - Inquiry ownership must distinguish public contact from authenticated customer history; it must not reuse incompatible BMS user/customer IDs.
-- If customer migration is approved, the platform must support explicit source identity mappings, duplicate resolution, account activation/linking, consent/verification treatment, and a safe retirement of Shopify tokens. Shopify credentials/tokens are not imported as Vastriqo credentials.
+- Existing Shopify/BMS test customers, profiles, credentials, passwords and addresses do **not** migrate or link. New customers register directly with Vastriqo and create native addresses going forward; legacy Shopify/BMS tokens are retired rather than transformed into Vastriqo credentials.
 - Future Google login is **DEFERRED**. The identity model should be capable of adding another verified identity later without requiring Google login now.
 
 ### 5.2 Administrators
@@ -320,11 +320,11 @@ The future catalog represents Vastriqo's business concepts, not Shopify resource
 | Cart | Shopify cart with local device ID; add/update/remove; no merge policy. | Vastriqo-owned lifecycle, authorization, lines, price/stock validation, totals, expiry policy, and consistent errors. | Guest checkout, expiry durations, login merge behavior. |
 | Checkout | Signed-in customer only; BMS validates name/phone; Shopify hosts checkout. | Independent orchestration of customer/contact, address, shipping, tax, discounts if approved, payment, and idempotent order creation. | Guest eligibility, required contact fields, shipping/tax/payment methods, discounts/COD. |
 | Buy Now | Creates a separate Shopify cart then hosted checkout. | If retained, uses the same validation/payment/order guarantees as standard checkout. | Existing-cart interaction and whether the shortcut remains desired. |
-| Orders | Shopify owns creation/history/status; UI shows latest 10. | Vastriqo-owned new orders/items with immutable price/address/product snapshots and authorized customer/admin history. | Historical Shopify order import/archive horizon and detailed status policy. |
+| Orders | Shopify owns creation/history/status; UI shows latest 10. | Vastriqo-owned new orders/items with immutable price/address/product snapshots and authorized customer/admin history. | Current test orders do not migrate; detailed native status policy is Phase 2/later design. |
 | Payments | Entirely behind Shopify hosted checkout. | Explicit provider boundary, attempt/transaction state, verified callbacks, idempotency, reconciliation, and authorized refund actions if approved. | Provider, methods, capture timing, COD, partial/full refunds. |
 | Fulfillment | Shopify data is queried but largely not rendered. | Enough owned fulfillment/shipping state and admin operations to complete independent orders. | Partial fulfillment, provider/manual process, shipment/tracking visibility. |
-| Cancellations/returns/refunds | Contact redirect or static copy only; no commerce mutation. | Implement only the workflows approved by business and align storefront policy claims with them. | Eligibility, windows, actors, state transitions, fees, reverse logistics, exchange model. |
-| Customer history | Shopify live orders/addresses; BMS profile/wishlist/inquiry/newsletter. | Vastriqo-owned new account data and retained features; historical data per approved migration/retention rules. | Customer/address/order/wishlist/inquiry migration scope and retention. |
+| Cancellations/returns/refunds | Contact redirect or static copy only; no commerce mutation. | Required future capabilities; inspect and design the appropriate workflow progressively in the relevant order/post-purchase phase, then align storefront policy claims. | Eligibility, windows, actors, state transitions, fees, reverse logistics and exchange model are later-phase policy, not current behavior. |
+| Customer history | Shopify live orders/addresses; BMS profile/wishlist/inquiry/newsletter. | New Vastriqo accounts, addresses, wishlists and orders start clean. Future native inquiry/newsletter capability is separate from historical data. | Approved: do not migrate current test-era customer, address, wishlist, order, inquiry or newsletter records. |
 
 Across checkout/payment/order creation, independent behavior must be retry-safe and prevent duplicate charges/orders. Exact transaction design is Phase 2 work. Provider integrations must be replaceable boundaries; this document does not select them.
 
@@ -353,10 +353,10 @@ Source-controlled content is already Vastriqo-owned and need not move into the d
 
 | Authentication path | Status | Purpose today/future | Final disposition | Migration implication |
 | --- | --- | --- | --- | --- |
-| Shopify Customer Account OAuth/PKCE | Active current path | Customer login/signup and upstream identity. | REPLACE | May remain temporarily; establish Vastriqo accounts/linking before retirement. Shopify tokens do not become permanent credentials. |
-| BMS customer bridge (`customers`, `customer_tokens`, JWT) | Active current bridge | Exchanges Shopify code, mirrors profile, stores token, issues 24-hour app JWT. | REPLACE | Selected profiles/external mappings may be transformed; token/session model is recreated. |
+| Shopify Customer Account OAuth/PKCE | Active current path | Customer login/signup and upstream identity. | REPLACE | May remain only until native registration cutover. No account linking or credential migration; Shopify tokens do not become Vastriqo credentials. |
+| BMS customer bridge (`customers`, `customer_tokens`, JWT) | Active current bridge | Exchanges Shopify code, mirrors profile, stores token, issues 24-hour app JWT. | REPLACE | No customer/profile/token records migrate. New native credentials/sessions start clean. |
 | Legacy native BMS front-user auth | Unused/overlapping | Uncalled login/signup/logout helpers and separate BMS `users` identity. | RETIRE | Do not use it as the new customer architecture or import its route assumptions. |
-| Future Vastriqo customer auth | Required target | Email/password registration/login, verification/recovery, session and logout. | REPLACE | Define account migration/linking only if customer migration is approved; Google login is deferred. |
+| Future Vastriqo customer auth | Required target | Email/password registration/login, verification/recovery, session and logout. | REPLACE | New accounts only; no legacy linking/activation. Google login is deferred. |
 | Current BMS admin auth | Active for BMS/CCA | Secures `bms-admin` and current BMS operations. | PRESERVE | Remains inside the independent CCA/BMS boundary; not reused as Vastriqo admin auth. |
 | Future Vastriqo admin auth | Required target | Secures multiple Vastriqo administrator accounts. | REPLACE | New independent identity/session boundary; allow later roles/permissions. No CCA SSO requirement now. |
 
@@ -372,13 +372,13 @@ Putting any dependency below behind `vastriqo-api` without changing its authorit
 | Inventory/availability | Shopify is effective sellability authority. | Yes until single authority cutover | Native inventory, availability, reservations, reconciliation. | Stock rules and concurrency/cutover tests pass with one Vastriqo authority. | NOT REQUIRED |
 | Cart | Creation/read/line mutations/totals. | Yes | Native cart lifecycle/service. | Native cart persistence, mutations, pricing, stock validation, and expiry are production-ready. | NOT REQUIRED |
 | Checkout | Buyer attachment and hosted checkout URL. | Yes | Native checkout orchestration. | Address, shipping, tax, payment handoff, and order creation are validated end-to-end. | NOT REQUIRED |
-| Customer identity | OAuth, customer identity token. | Yes | Vastriqo email/password identity/session. | Registration/login/recovery/verification, linking/migration, and session cutover are validated. | NOT REQUIRED |
-| Customer profile | Admin customer read/update and BMS sync. | Yes | Vastriqo customer profile. | Approved customer data is imported/activated or intentionally excluded; profile is native. | NOT REQUIRED |
-| Addresses | Live Shopify Admin CRUD/default. | Yes | Native address book. | Address self-service and approved migration/recreation are validated. | NOT REQUIRED |
-| Orders/history | Shopify creates and returns live retail orders. | Yes | Native orders/items/history; optional archive/import for old orders. | New orders are native and approved historical access policy is available. | NOT REQUIRED |
-| Fulfillment/tracking | Shopify query supplies data, though UI ignores it. | Yes while Shopify orders remain | Native approved fulfillment/shipment/tracking capability. | Approved workflows work for native orders and old-order access is resolved. | NOT REQUIRED |
+| Customer identity | OAuth, customer identity token. | Yes | Vastriqo email/password identity/session. | New-account registration/login/recovery/verification and session cutover are validated; no legacy linking/import exists. | NOT REQUIRED |
+| Customer profile | Admin customer read/update and BMS sync. | Yes | New native Vastriqo customer profile. | New-account profile behavior is native; current test profiles are explicitly excluded. | NOT REQUIRED |
+| Addresses | Live Shopify Admin CRUD/default. | Yes | Native address book for new customers. | Native address self-service is validated; current test addresses are explicitly excluded. | NOT REQUIRED |
+| Orders/history | Shopify creates and returns live retail orders. | Yes | Native orders/items/history for post-cutover orders. | New orders/history are native; current test orders have no target import/archive dependency. | NOT REQUIRED |
+| Fulfillment/tracking | Shopify query supplies data, though UI ignores it. | Yes while Shopify orders remain | Native fulfillment/shipment capability with later progressive customer tracking workflows. | Native operational fulfillment works; no old-order migration/access dependency remains. | NOT REQUIRED |
 | Payment | Hosted checkout owns method/result. | Yes until payment cutover | Independent provider boundary and payment state. | Verified callbacks, failure handling, idempotency, refunds if approved, and reconciliation pass. | NOT REQUIRED |
-| Shopify product/variant/customer/address/order GIDs | Identity threaded through storefront, BMS, cart, wishlist, and customer bridge. | Yes as external mapping | Vastriqo IDs plus bounded migration mapping. | Runtime/domain relations use Vastriqo IDs; mapping retained only for approved reconciliation/archive. | NOT REQUIRED for operation |
+| Shopify product/variant/customer/address/order GIDs | Identity threaded through storefront, BMS, cart, wishlist, and customer bridge. | Product/variant IDs only where needed for included migration/route cutover | Vastriqo IDs plus bounded mappings for included records. | Runtime/domain relations use Vastriqo IDs; no customer/address/test-order mappings are created. | NOT REQUIRED for operation |
 | Shopify cart IDs | Device-local cart pointer. | Yes only while Shopify carts are active | Vastriqo cart identity. | Shopify carts expire/bridge per cutover policy and no new ones are created. | NOT REQUIRED |
 | Shopify access/refresh/customer tokens | OAuth/customer/cart buyer attachment and admin integrations. | Yes while explicit temporary calls remain | Vastriqo credentials/sessions and provider credentials as applicable. | All related dependencies exit; retention window passes; secrets/tokens are revoked/deleted. | NOT REQUIRED |
 | Shopify product sync | Populates BMS mirror. | Yes for migration/reconciliation | Repeatable import into native domain, then native admin writes. | Final import/delta reconciliation completes and Shopify no longer changes native catalog. | NOT REQUIRED |
@@ -391,22 +391,22 @@ Putting any dependency below behind `vastriqo-api` without changing its authorit
 | Custom collections | Home/Men/Women/Kids membership/order. | Yes | Preserve concept in native collections. | Definitions/membership/order map to native products and admin management is validated. | NOT REQUIRED |
 | Product mirror | Partial Shopify-shaped cards/JSON. | Yes for comparison/import | Replace with native catalog; raw JSON is not target data. | Native catalog projections cover all approved fields and reconcile to source. | NOT REQUIRED |
 | Related products | Shared active collection lookup. | Yes | Preserve/improve rule natively. | Native related results meet approved behavior. | NOT REQUIRED |
-| Customer bridge | Shopify exchange, local customer/token/JWT. | Yes | Replace with native customer identity. | Account migration/linking and session cutover complete. | NOT REQUIRED |
-| Customer profile | Primary profile reads/writes BMS `customers`. | Yes | Preserve profile in native customer domain. | Approved profiles are imported/activated or intentionally excluded. | NOT REQUIRED |
+| Customer bridge | Shopify exchange, local customer/token/JWT. | Yes until native registration cutover | Replace with clean native customer identity. | New native auth is operational; no account linking/import is required; legacy sessions/tokens are retired. | NOT REQUIRED |
+| Customer profile | Primary profile reads/writes BMS `customers`. | Yes until native registration cutover | New native customer profiles only. | Native profile works for new accounts; current BMS test profiles are excluded. | NOT REQUIRED |
 | Checkout validation/details | Checks name/phone and exposes Shopify token; dual writes. | Yes | Replace with native customer/checkout validation. | Native validation is approved and no Shopify buyer token is needed. | NOT REQUIRED |
-| Addresses | Pure Shopify Admin proxy. | Yes | Replace with native address book. | Native CRUD/default and migration policy complete. | NOT REQUIRED |
-| Orders | Pure Shopify Admin query for retail orders. | Yes | Replace with native order history/archive policy. | New history is native and old-order access decision is implemented. | NOT REQUIRED |
-| Wishlist | BMS records with Shopify/customer bridge IDs. | Yes | Preserve/improve native wishlist. | Records are remapped/reconciled or excluded per approved scope. | NOT REQUIRED |
+| Addresses | Pure Shopify Admin proxy. | Yes until native account cutover | Replace with native address book for new accounts. | Native CRUD/default works; current test addresses are not migrated. | NOT REQUIRED |
+| Orders | Pure Shopify Admin query for retail orders. | Yes until native order cutover | Replace with native order history for post-cutover orders. | New history is native; current test orders are neither imported nor archived. | NOT REQUIRED |
+| Wishlist | BMS records with Shopify/customer bridge IDs. | Yes until native customer/wishlist cutover | Preserve/improve as new native wishlist relationships. | New native behavior works; current BMS rows are not migrated. | NOT REQUIRED |
 | Inquiry submission | Contact form writes BMS records. | Yes | Preserve/improve submission natively. | Native public/authenticated submission and approved support handling are operational. | NOT REQUIRED |
-| Inquiry history | Hidden route with incompatible BMS user/customer ownership. | Only if business retains it | UNDECIDED; redesign ownership if approved. | Decision is approved and either native history is validated or the path is retired. | NOT REQUIRED |
-| Newsletter | Subscriber capture. | Yes | Preserve/improve if consent/retention approved. | Native capture/unsubscribe policy and approved import complete. | NOT REQUIRED |
+| Inquiry history | Hidden route with incompatible BMS user/customer ownership. | No historical continuity required | Do not migrate current records; future native support/history behavior is designed separately if required. | Current history path is retired; no BMS inquiry records remain a dependency. | NOT REQUIRED |
+| Newsletter | Subscriber capture. | Yes until native replacement/approved retirement | Future native capture/unsubscribe may be preserved independently; current rows do not migrate. | New behavior, if implemented, has no BMS subscriber-data dependency. | NOT REQUIRED |
 | Wallet/referrals feature | No storefront consumer. | No final requirement established | DEFER. | Confirm later scope or retire after archive/retention review. | NOT REQUIRED |
 | Automatic referral-code login side effect | BMS customer bridge creates a code without a storefront referral flow. | Not needed | RETIRE. | Verify no approved/deployed consumer and remove the coupling during implementation. | NOT REQUIRED |
 | Storefront pages/menus | BMS modules exist but Vastriqo does not use them. | Not needed | RETIRE as assumed source; future CMS is separate decision. | Verify no deployed-only consumer; preserve source content independently. | NOT REQUIRED |
 | Native front auth/profile | Uncalled/overlapping path. | Not needed | RETIRE. | Compatibility review completed; no active callers. | NOT REQUIRED |
 | Missing/legacy logout/auth routes | Clients target unaudited missing routes. | Not needed | RETIRE and replace with native session behavior. | New auth is validated and legacy paths have no callers. | NOT REQUIRED |
 | Missing product sitemap route | Vastriqo expects unaudited `/shopify-products/sitemap`. | Not needed | Replace with native published-product sitemap. | Sitemap uses native catalog and is verified. | NOT REQUIRED |
-| Inquiry S3 attachment | BMS accepts a file but current UI never sends/displays it. | Only if deployed use is proven | UNDECIDED. | Decide attachment scope; migrate selected files or retire capability. | NOT REQUIRED unless separately approved |
+| Inquiry S3 attachment | BMS accepts a file but current UI never sends/displays it. | No historical continuity required | Do not migrate current attachments. A future native attachment capability requires a separate support/security decision. | BMS attachment dependency is retired; no source files migrate. | NOT REQUIRED |
 | CCA/BMS database | Mixed business data including bridge records. | Only as read-only migration source where approved | Never the Vastriqo commerce database. | Required data transformed/reconciled; runtime reads/writes cease. | NOT REQUIRED |
 
 ## 11. Migration Scope — Requirements Only
@@ -423,24 +423,25 @@ This classifies scope; it does not authorize data access, scripts, imports, or w
 | Collections | Required migration | Transform active BMS custom collection meaning to Vastriqo identity. |
 | Collection ordering | Required migration | Preserve validated ordered membership/merchandising rank. |
 | Inventory | Required migration + recreate/reconcile | Obtain an authoritative cutover snapshot/delta from Shopify/operations; BMS total is insufficient; initialize native stock/rules. |
-| Customers | Later migration — UNDECIDED | Do not expand initial product scope. Decide population, consent, duplicate/linking, activation, and verification first. |
-| Addresses | Later migration — UNDECIDED | Shopify-live data; follows the customer migration and country/field policy. |
-| Wishlists | Later migration | Transform only if customers and products are mapped and retention is approved. |
-| Inquiries | Later migration — UNDECIDED | Correct identity ownership; decide history/status/attachment retention. |
-| Newsletter subscribers | Likely later migration | Import only records with acceptable consent/retention evidence; create unsubscribe/suppression policy. |
-| Historical orders | UNDECIDED | Choose full import, read-only archive, limited horizon, or no customer-visible migration. Do not map CCA BMS orders. |
+| Customers | Do not migrate | Current accounts are test users. Start clean; no Shopify/BMS profile, account linking, activation, password or credential migration. |
+| Addresses | Do not migrate | Current test-user addresses are excluded. New native customers create native addresses going forward. |
+| Wishlists | Do not migrate | Exclude all current BMS wishlist relationships and snapshots; future wishlist behavior uses new native identities. |
+| Inquiries/support records | Do not migrate | Exclude current BMS inquiry/history rows and attachments. Future native support functionality is separate. |
+| Newsletter subscribers | Do not migrate | Exclude current BMS subscriber/consent rows. Future native newsletter functionality is separate. |
+| Historical orders | Do not migrate | Exclude current Shopify/BMS test orders, transactions and fulfillments; do not create a dedicated historical archive. New native order history begins post-cutover. |
+| Existing legal/financial information | No dedicated migration scope | Carry forward only information already available and safely/straightforwardly reusable for an included requirement. Do not invent a broad legal/financial history migration. |
 | Active carts | Do not migrate by default | Prefer expiry or a temporary bridge; migrate only if cutover policy explicitly requires continuity. |
 | Shopify tokens/customer access tokens | Do not migrate | Integration credentials are not Vastriqo credentials; revoke/delete after dependency exit and retention window. |
-| BMS customer tokens/JWT/session records | Do not migrate | Recreate secure native credentials/sessions; selected profile data is separate. |
+| BMS customer tokens/JWT/session records | Do not migrate | Recreate secure native credentials/sessions for new accounts; no linked profile data migrates. |
 | BMS product mirror JSON | Archive/retain temporarily for reconciliation; do not migrate as target data | Useful evidence/source comparison only. |
-| Shopify/BMS external IDs | Recreate as bounded migration mappings | Retain only where import reconciliation, redirects, or historical archive needs them; never primary identity. |
+| Shopify/BMS external IDs | Recreate as bounded mappings for included records only | Retain only where product/catalog/collection/inventory import reconciliation or route redirects need them; never map excluded test customers/orders and never use source IDs as primary identity. |
 | Source-controlled content/navigation | Recreate/retain | Already Vastriqo-owned; continue in source unless CMS is approved. |
 | Source/local/CCA-linked assets | Recreate/retain selectively | Keep valid local assets; rehost required CCA/Shopify assets under independent ownership. |
 | BMS storefront pages/menus | Do not migrate | No current consumer. |
-| Wallet/referrals | UNDECIDED; archive/retain if legally/operationally needed | No storefront requirement is established; do not silently add to scope. |
+| Wallet/referrals | Do not migrate | No storefront requirement is established. A future feature requires a separate decision and must not inherit BMS side effects/data automatically. |
 | Analytics configuration/events | Recreate if approved | Review identifiers, events, consent, and destinations rather than copy automatically. |
 
-Every approved migration later requires source inventory, mapping, validation, reconciliation, repeatability, cutover ownership, and rollback criteria. Those artifacts are Phase 2/later work.
+Every included migration class later requires source inventory, mapping, validation, reconciliation, repeatability, cutover ownership and rollback criteria. Excluded classes require explicit zero-target assertions, not source-data transformation. Those artifacts are Phase 2/later work.
 
 ## 12. Requirements Explicitly Out of Scope for Now
 
@@ -464,31 +465,17 @@ The following do not block completion of this requirements artifact:
 
 The independent capabilities for payment, shipping, tax, identity, inventory, orders, fulfillment, and data migration are not out of scope for the overall platform. Only provider selection and implementation design are deferred.
 
-## 13. Open Business Decisions
+## 13. Phase 1 Business Decisions — Closed
 
-Closure note: this broad list is retained as the requirements-stage discovery record. It has been narrowed and reclassified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Items established by the current storefront are no longer treated as approval questions; engineering choices and production-data checks are separated from genuine business decisions.
+No Phase 1 business decision remains unresolved. The authoritative resolutions are in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §22. In particular:
 
-These decisions materially affect Phase 2 domain, API, data, or admin design and require approval:
+- new customer accounts and addresses start clean; current Shopify/BMS test users, profiles, credentials, passwords and addresses do not migrate or link;
+- current BMS wishlists, inquiries/support records, attachments and newsletter subscribers do not migrate;
+- current Shopify/BMS test orders, transactions and fulfillments do not migrate and receive no dedicated archive;
+- no broad legal/financial history migration is created; only already available information that is safely and straightforwardly reusable for an included requirement may be carried forward; and
+- cancellation, refund, return, exchange and customer-visible tracking are required future capabilities, with detailed policies/workflows decided progressively in their relevant order/post-purchase phase.
 
-1. **Catalog taxonomy and audience:** What are the approved product type/category, Men/Women/Kids/audience, color, size, tag, and brand/vendor vocabularies? This determines classification, filters, collections, attributes, and migration normalization.
-2. **Operational product fields:** Are SKU, barcode, weight, shipping/tax flags, compare-at price, variant media, and SEO overrides required? These affect admin, fulfillment, pricing, and import scope.
-3. **Production custom data:** Which runtime-configured Shopify metafields/metaobjects actually contain valuable data, including `styling_tips` and `about_this_item`? This needs a non-mutating production inventory before the attribute model is finalized.
-4. **Collections page and merchandising overrides:** Should `/collections` list collections or all products, and are card-image overrides product-wide or placement-specific? This affects information architecture and collection/media relationships.
-5. **Inventory policy:** Is inventory single- or multi-location; when is stock reserved/released; are backorders/overselling allowed; who adjusts stock and why? These decisions define sellability and concurrency rules.
-6. **Guest commerce:** May guests complete checkout, and how should anonymous carts expire or merge at login? This affects identity, cart ownership, checkout, and migration continuity.
-7. **Customer verification/profile policy:** Must email be verified before purchase; is phone required/verified; which fields can customers change; which countries/addresses are supported? This affects credential, customer, checkout, and address contracts.
-8. **Customer data migration:** Will existing customers be migrated, how will they activate/link accounts, and how will duplicates/consent be handled? This determines identity mappings and rollout.
-9. **Checkout scope:** Which shipping rules, tax/GST outcomes, discounts/promotions, payment methods, COD, and fraud checks are business requirements? Shopify currently hides them, so they must be stated before detailed checkout design.
-10. **Order lifecycle:** What statuses and transitions are required, including payment failure, cancellation, fulfillment, shipment, and delivery? This defines the order/admin contract.
-11. **Cancellation/refund/return/exchange:** Which workflows are genuinely offered, with what eligibility windows, actors, charges, inventory effects, and refund behavior? Current content is not implementation evidence.
-12. **Tracking and notifications:** Is customer-visible shipment tracking required, and which account/order/payment/shipment events require email or SMS? This affects fulfillment records and external-service boundaries.
-13. **Historical data:** Should historical Shopify orders be imported fully, imported read-only for a limited period, or retained in a separate archive? Should addresses, wishlists, inquiries, and newsletter records migrate? This affects migration volume, customer history, privacy, and support.
-14. **Admin operating scope:** Which first-release admin capabilities and roles are required beyond products, variants, media, inventory, collections, orders, and customers? Decide support, newsletter, address access, dashboards, settings, fulfillment, payment, and audit-history depth.
-15. **Content management:** Which content must business users edit without deployment, and are preview, scheduling, approval, or localization required? This decides whether any CMS domain belongs in Vastriqo.
-16. **Permanent CCA/BMS integration:** Is there any approved cross-business use case after separation? If yes, its data owner, contract, privacy, failure isolation, and availability expectation must be explicit.
-17. **Wallet/referrals:** Is this a future Vastriqo product feature or should the disconnected BMS behavior be retired? This determines whether any records/domain concepts survive.
-
-Provider names, framework choices, and physical design are intentionally not business decisions in this register; they follow approved behavior.
+The prior questions about catalog representation, inventory mechanics, API/database choices and lifecycle design are engineering decisions or production-data validation. Guest/international commerce, complex admin/CMS, provider selection and other optional expansions remain safely deferred. Detailed legal/privacy/tax/consent and post-purchase operating policy is a later implementation checkpoint, not an unresolved Phase 1 gate.
 
 ## 14. Phase 1 Acceptance Criteria
 
@@ -511,11 +498,11 @@ This list was the conservative requirements-stage acceptance proposal. The final
 
 ### Current readiness assessment
 
-This requirements document originally treated several policy, provider and production-data items as a single Phase 2 gate. The later source-led closure separates them. **Phase 1 is conceptually complete and Phase 2 detailed design may begin.** Conditional contract freezes and migration plans still wait for the specific validation or business decision identified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §§20–23.
+This requirements document originally treated several policy, provider and production-data items as a single Phase 2 gate. The later source-led closure separates them. **Phase 1 is conceptually complete, all Phase 1 business decisions are resolved, and Phase 2 detailed design may begin.** Conditional contract freezes still wait for the specific production validation or later implementation-policy checkpoint identified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §§20–23.
 
 ## 15. Recommended Phase 2 Inputs
 
-Once the Phase 1 acceptance criteria are met, Phase 2 should consume:
+Phase 1 is complete. Phase 2 should consume:
 
 - the approved feature disposition register;
 - approved catalog/attribute/taxonomy and inventory rules;

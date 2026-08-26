@@ -574,11 +574,14 @@ Examples include:
 - variants;
 - categories;
 - inventory;
-- customers;
-- addresses;
-- historical orders where required;
-- wishlists;
-- other relevant customer/store data.
+- required product attributes/specifications;
+- product media, pricing, publication and availability data;
+- relevant collection membership/order and merchandising data; and
+- only other data explicitly included by the authoritative Phase 1 migration register.
+
+Approved Phase 1 clean-start decision: do **not** migrate current test-era customers, customer credentials, addresses, wishlists, historical orders, newsletter subscribers, or support/inquiry records. Do not create a dedicated historical-order archive for that data. New native customer and order records begin after Vastriqo takes ownership.
+
+Existing legal/financial information may be carried forward only where already available and safely/straightforwardly reusable for an included requirement; it is not a dedicated historical migration stream.
 
 Migration must include validation and reconciliation.
 
@@ -697,7 +700,7 @@ and:
 
 # 12. What This Document Does Not Decide Yet
 
-Status note (2026-08-26): this was the original direction-stage list. Phase 1 has now decided or bounded the conceptual items in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Exact physical schema/API/framework/provider/deployment choices remain Phase 2 or later decisions as appropriate; they are no longer Phase 1 blockers.
+Status note (2026-08-26): this was the original direction-stage list. Phase 1 has now decided or bounded the conceptual items in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`, including the clean-start/no-history-import scope. Exact physical schema/API/framework/provider/deployment choices remain Phase 2 or later decisions as appropriate; they are no longer Phase 1 blockers.
 
 The following remain deliberately open until the architecture phase:
 
@@ -714,8 +717,6 @@ The following remain deliberately open until the architecture phase:
 - inventory rules;
 - order state machine;
 - fulfillment model;
-- customer data migration strategy;
-- historical order migration;
 - Shopify cutover strategy;
 - AWS architecture;
 - CI/CD architecture;

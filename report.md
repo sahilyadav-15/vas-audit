@@ -2,7 +2,7 @@
 
 ## Overall Status
 
-Phase 1 — Target Architecture & Requirements is complete. The final closure register separates established requirements, engineering decisions, production-data validation, genuine business decisions and safe deferrals. Phase 2 detailed data/API design may begin; neither target application should be initialized in Phase 2.
+Phase 1 — Target Architecture & Requirements is conceptually complete, and all Phase 1 business decisions are approved. Phase 2 detailed data/API design may begin; neither target application should be initialized in Phase 2. No application implementation has started.
 
 ## Current Architecture
 
@@ -66,18 +66,17 @@ Status: Not Started
 - Existing BMS engineering conventions may inform the new API, but code, schema, authentication, and runtime dependencies will not be copied automatically.
 - `vastriqo-admin` and `bms-admin` may link to each other as separate applications; shared SSO is optional and deferred until explicitly designed.
 - The migration will preserve appropriate storefront behavior and remove dependencies progressively, with validation before cutover.
+- The new customer system starts clean: current Shopify/BMS test customers, credentials, addresses and wishlists will not migrate or link.
+- Current test orders will not migrate and will not receive a dedicated historical archive; native order history starts with new Vastriqo orders.
+- Current BMS newsletter subscribers and support/inquiry records will not migrate.
+- Cancellation, refund, return, exchange and customer-visible tracking remain required future capabilities, designed progressively in the relevant post-purchase phase rather than copied from broken current behavior.
+- Product/Catalog remains the first migration and implementation vertical, including required variants, options, attributes/specifications, media, pricing, publication, inventory/availability and collection/merchandising data.
 
-## Non-Blocking Decisions and Validation
+## Approved Business Decisions and Remaining Validation
 
-The authoritative register is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Remaining business decisions do not block Phase 2 start and are limited to:
+The authoritative register is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. No Phase 1 business decision remains unresolved. Existing test-era customers, addresses, wishlists, orders, inquiries and newsletter records are explicitly outside migration scope. No broad legal/financial historical migration is required.
 
-- existing customer account continuity and personal-data retention;
-- historical wishlist/support/newsletter retention/import;
-- historical order import/archive scope;
-- tax/GST/invoice, privacy and checkout-consent obligations; and
-- future post-purchase self-service policies when those deferred features are activated.
-
-Production validation and Phase 2 ADRs are scheduled checkpoints, not Phase 1 blockers. Exact framework/database/version, identifier/money/session, deployment/security, testing/observability and admin-UI choices belong to Phase 2 detailed design.
+Production validation has **not** been completed. Product/catalog, collection, inventory and current provider/configuration inspections remain scheduled checkpoints, not Phase 1 blockers. Exact framework/database/version, identifier/money/session, deployment/security, testing/observability and admin-UI choices belong to Phase 2 detailed design. Detailed legal/tax/privacy/consent and post-purchase workflows are decided at their relevant later implementation checkpoints.
 
 ## Implementation Gates
 
@@ -87,7 +86,7 @@ Production validation and Phase 2 ADRs are scheduled checkpoints, not Phase 1 bl
 
 ## Next Step
 
-- Begin Phase 2 detailed design using the final closure register: ADRs, physical relational schema, OpenAPI/security contracts, lifecycle/concurrency sequences, provider boundaries, field-level migration/reconciliation specifications, admin workflows and validation checkpoints. Do not initialize either target repository or implement code in Phase 2.
+- Begin Phase 2 detailed design using the final closure register, with Product/Catalog as the first implementation vertical: ADRs, physical relational schema, OpenAPI/security contracts, lifecycle/concurrency sequences, provider boundaries, field-level migration/reconciliation specifications, admin workflows and validation checkpoints. Do not initialize either target repository or implement code in Phase 2.
 
 ## Change Log
 
@@ -108,3 +107,5 @@ Production validation and Phase 2 ADRs are scheduled checkpoints, not Phase 1 bl
 - Reclassified every unresolved item as already decided, engineering decision, production-data validation, genuine business decision or safe deferral.
 - Reconciled stale questions and readiness statements across the Phase 1 documents.
 - Closed Phase 1 and marked Phase 2 detailed design ready to start without authorizing application/repository initialization.
+- Recorded the final clean-start business decisions: no migration of current test customers, credentials, addresses, wishlists, orders, inquiries or newsletter records; no dedicated test-order archive; and no broad legal/financial history migration.
+- Confirmed required future post-purchase capabilities remain in scope for progressive later-phase design and that Product/Catalog remains the first implementation vertical.

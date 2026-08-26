@@ -1,7 +1,7 @@
 # Vastriqo Phase 1 — Conceptual Commerce Architecture
 
 Date: 2026-08-25; closure reconciliation recorded 2026-08-26 (Asia/Kolkata)
-Status: **Conceptual architecture complete; final readiness governed by `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`**
+Status: **Conceptual architecture complete; all Phase 1 business decisions resolved; final readiness governed by `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`**
 Implementation status: **No application code, repository, database, migration, or external data was created or changed**
 
 ## 1. Purpose and Outcome
@@ -79,7 +79,7 @@ The initial backend should be a **modular monolith**, not a set of microservices
 
 | Owner | Owns | Must not own |
 | --- | --- | --- |
-| `vastriqo-api` and Vastriqo DB | Products, variants, attributes, collections, prices, stock, reservations, customers, credentials/sessions, addresses, wishlists, carts, checkouts, orders, payment state, fulfillment/shipment state, inquiries/newsletter where retained, admin identities/authorization, audit, import mappings. | Shopify/BMS-shaped mirrors, CCA operations, browser presentation state. |
+| `vastriqo-api` and Vastriqo DB | Products, variants, attributes, collections, prices, stock, reservations, new native customers, credentials/sessions, addresses, wishlists, carts, checkouts, orders, payment state, fulfillment/shipment state, future native inquiries/newsletter where implemented, admin identities/authorization, audit, and mappings for included migration records. | Shopify/BMS-shaped mirrors, test-era customer/order/auxiliary history, CCA operations, browser presentation state. |
 | `vastriqo` storefront | Customer presentation, route composition, browser interaction, accessibility, SEO rendering, analytics after approval, and a narrow BFF where needed for secure sessions. | Authoritative price, inventory, eligibility, order creation, payment truth, or domain identifiers from Shopify. |
 | `vastriqo-admin` | Administration presentation, workflows, client-side form state, and calls to authorized admin APIs. | Direct database access, direct provider credentials, commerce rules duplicated in the browser, or BMS/Shopify runtime calls. |
 | External providers | Bounded payment, shipping, tax, messaging, and media services that are explicitly selected. | Vastriqo domain ownership or the only copy of accepted commerce outcomes. |
@@ -194,10 +194,10 @@ Authentication, authorization, rate limits, response/error rules, and audit requ
 | Classification | Requirements |
 | --- | --- |
 | **MUST SUPPORT** | Email/password registration and login; unique normalized customer email; securely hashed credentials; current-customer read; revocable sessions with expiry/rotation policy; logout; password recovery; verification lifecycle capability; one native customer profile; address create/read/update/delete and one default address; privacy-safe account state; separate admin identity. |
-| **SHOULD SUPPORT** | Session/device listing and all-session revocation; account security/audit events; controlled account linking/activation for migrated customers; normalized phone and address validation through explicit policy. |
+| **SHOULD SUPPORT** | Session/device listing and all-session revocation; account security/audit events; normalized phone and address validation through explicit policy. |
 | **DEFER** | Google/social login, CCA/BMS SSO, passwordless login, loyalty/wallet/referral identity, and customer organization accounts. |
 | **RETIRE** | Shopify Customer Account as final identity; Shopify customer tokens; BMS `customer_tokens`; Shopify/BMS IDs in native sessions; localStorage as the authoritative session; legacy BMS `front/auth` path; duplicate customer profile truth; login-time referral-code side effect. |
-| **NEEDS BUSINESS INPUT** | Whether email verification is mandatory before checkout; phone required/verified status; allowed countries/address fields; guest checkout; customer migration/activation/linking and duplicate policy; account deletion/retention policy; all-device logout requirement. |
+| **ALREADY DECIDED / DEFERRED POLICY** | Existing Shopify/BMS test customers, credentials and addresses do not migrate or link; new accounts start clean. Verification gates, wider country support, guest checkout and native-data retention/deletion details are later implementation policies behind the established identity boundary. |
 
 ## 4.5 Wishlist
 
@@ -217,10 +217,10 @@ Authentication, authorization, rate limits, response/error rules, and audit requ
 | Classification | Requirements |
 | --- | --- |
 | **MUST SUPPORT** | One active WishlistItem per Customer/Product; list/add/remove/toggle; native IDs; authenticated authorization; pending-login add behavior; current product card projection; deterministic unavailable/deleted-product handling. |
-| **SHOULD SUPPORT** | Idempotent add/remove, pagination for large lists, migration reconciliation, and privacy-safe customer export/deletion handling. |
+| **SHOULD SUPPORT** | Idempotent add/remove, pagination for large lists, and privacy-safe customer export/deletion handling for new native data. |
 | **DEFER** | Multiple named wishlists, sharing, notes, alerts, collaborative lists, and anonymous persistent wishlists beyond the current one-item login handoff. |
 | **RETIRE** | `user_id`/`customer_id` polymorphism; Shopify product identity as relation; stale title/image/handle as display authority; admin visibility without an approved support purpose. |
-| **NEEDS BUSINESS INPUT** | Whether existing BMS wishlists migrate and their retention period; whether unavailable products remain visible; whether wishlist data may be used for merchandising/analytics. |
+| **ALREADY DECIDED / DEFERRED POLICY** | Existing BMS wishlist rows do not migrate. Unavailable-product presentation and any merchandising/analytics use can be refined later without changing the clean-start decision. |
 
 ## 4.6 Cart
 
@@ -287,11 +287,11 @@ Authentication, authorization, rate limits, response/error rules, and audit requ
 
 | Classification | Requirements |
 | --- | --- |
-| **MUST SUPPORT** | Exactly-once native order creation; customer and order number identity; immutable line title/variant/options/media/quantity/unit-price snapshots; shipping/contact address snapshots; exact subtotal, shipping, tax, discount-if-approved, and total; currency; separate order/payment/fulfillment state dimensions; payment references; inventory reservation/consumption linkage; customer list/detail with authorization and pagination; admin search/detail; source provenance for imported history. |
-| **SHOULD SUPPORT** | Fulfillment records sufficient to complete accepted orders; shipment/tracking record capability; order timeline/audit; support notes separated from customer-visible data; read-only imported-order mode. |
-| **DEFER** | Advanced split fulfillment, exchanges as a dedicated workflow, return merchandise authorization, and customer self-service actions until policy is approved. |
+| **MUST SUPPORT** | Exactly-once native order creation; customer and order number identity; immutable line title/variant/options/media/quantity/unit-price snapshots; shipping/contact address snapshots; exact subtotal, shipping, tax, discount-if-approved, and total; currency; separate order/payment/fulfillment state dimensions; payment references; inventory reservation/consumption linkage; customer list/detail with authorization and pagination; admin search/detail. |
+| **SHOULD SUPPORT** | Fulfillment records sufficient to complete accepted orders; shipment/tracking record capability; order timeline/audit; support notes separated from customer-visible data. |
+| **DEFER** | Detailed advanced split fulfillment and customer self-service cancellation/refund/return/exchange/tracking workflow design until the relevant order/post-purchase phase. These are required future capabilities, not retired behavior. |
 | **RETIRE** | Shopify order IDs/status enum names as native semantics; BMS CCA order schema; first gateway as the complete payment history; latest-10 cap; fake track/cancel behaviors. |
-| **NEEDS BUSINESS INPUT** | Order-number format; full lifecycle/transitions; partial fulfillment; cancellation/refund/return/exchange rules; customer-visible tracking; notifications; historical order import/archive horizon; invoice/GST document requirements. |
+| **ALREADY DECIDED / DEFERRED POLICY** | Current test orders do not migrate or receive a dedicated archive. Order numbering/lifecycles are engineering design; detailed post-purchase and invoice/GST policies are approved in their relevant implementation phases. |
 
 ## 4.9 Payment, Shipping, and Tax
 
@@ -342,8 +342,8 @@ Provider neutrality means the Vastriqo domain records its own requests, decision
 
 | Source | Appropriate role | Not appropriate as |
 | --- | --- | --- |
-| Shopify | Preferred complete source for product, variant, option, media, price, publication input, inventory cutover snapshot, and—if approved—customer/address/order history. | Runtime owner after cutover; target schema; source through capped storefront queries. |
-| BMS | Source for active custom collection definition/membership/order; possible source for wishlist, inquiry, and newsletter; secondary reconciliation evidence for product/customer data. | Product/inventory/customer/order authority; Vastriqo database; source for CCA retail history. |
+| Shopify | Preferred complete source for product, variant, option, media, price, publication input and inventory cutover snapshot. | Runtime owner after cutover; target schema; source for customer/address/test-order migration; source through capped storefront queries. |
+| BMS | Source for active custom collection definition/membership/order and secondary reconciliation evidence for included product/merchandising data. | Source for customer, wishlist, inquiry, newsletter or test-order migration; Product/inventory/customer/order authority; Vastriqo database; source for CCA retail history. |
 | `vastriqo` source | Source for existing editorial content, routes, display behavior, analytics events, and navigation. | Commerce database or proof that marketing claims are implemented. |
 | Vastriqo target | New native identities, normalized domain records, accepted business truth, import provenance and reconciliation results. | A raw archive of every Shopify/BMS field. |
 
@@ -357,9 +357,9 @@ Provider neutrality means the Vastriqo domain records its own requests, decision
 | --- | --- |
 | **MUST SUPPORT** | Read-only extraction; complete pagination/export; immutable ImportRun identity and source snapshot/watermark; deterministic normalization; external source mappings with unique source key; idempotent upsert; relationship resolution only through mappings; dry run/preview; validation and issue reporting; counts/checksums/sample comparison; safe rerun; cutover delta; no writes to Shopify/BMS; explicit no-migrate classifications. |
 | **SHOULD SUPPORT** | Per-record source hash/status; resume after failure; import-owned-field/conflict policy; reversible target batch before public cutover; media copy verification; historical source archive with bounded retention; admin-readable reconciliation. |
-| **DEFER** | Active cart migration, continuous post-cutover sync, generic ETL platform, and data classes whose retention/business use is not approved. |
-| **RETIRE** | Tokens/secrets/sessions; raw BMS product JSON as domain data; Shopify/BMS IDs as PK/FK; CCA products/orders/users/invoices/finance/seller/IoT; disconnected BMS pages/menus; wallet/referral login side effects; stale/orphan relationships; unapproved personal data. |
-| **NEEDS BUSINESS INPUT** | Customer/address/wishlist/inquiry/newsletter migration and consent; historical order horizon/mode; active-cart cutover; source retention; product field/taxonomy mappings; image override treatment; inventory cutover timing; deletion/tombstone policy. |
+| **DEFER** | Active cart migration, continuous post-cutover sync and a generic ETL platform. |
+| **RETIRE** | Tokens/secrets/sessions; raw BMS product JSON as domain data; Shopify/BMS IDs as PK/FK; current test-era customers, addresses, wishlists, orders, inquiries and newsletter rows; CCA products/orders/users/invoices/finance/seller/IoT; disconnected BMS pages/menus; wallet/referral login side effects; stale/orphan relationships; unapproved personal data. |
+| **ALREADY DECIDED / VALIDATE LATER** | Product/catalog, media, publication, inventory and required collection data are the migration priority. Product field/taxonomy mappings, image overrides, inventory cutover timing and tombstone behavior are engineering/data-validation checkpoints, not open historical-data scope. |
 
 The detailed deterministic migration design is in §10.
 
@@ -450,7 +450,7 @@ Relationships marked with provider- or policy-dependent entities express require
 
 | Concept | Required fields/concepts | Ownership and invariants |
 | --- | --- | --- |
-| Customer | Native ID, normalized email, display/name fields, approved phone fields, account state, verification markers, audit timestamps. | Unique normalized email. Profile is the single native truth. PII reads/writes are authorized and audited as appropriate. |
+| Customer | Native ID, normalized email, display/name fields, approved phone fields, account state, verification markers, audit timestamps. | Unique normalized email. Profile is the single native truth. PII reads/writes are authorized and audited as appropriate. Starts with newly registered native customers; test users are not imported. |
 | CustomerCredential | Customer, password hash metadata, created/changed time, disabled/compromised marker. | Never store/recover plaintext password. Imported Shopify/BMS tokens are not credentials. Credential changes revoke sessions according to security policy. |
 | CustomerSession | Customer, opaque session reference/hash, expiry, revocation, rotation/family context, last-use metadata. | Server-revocable and not exposed through logs. Browser credential should be inaccessible to JavaScript where architecture permits. |
 | AccountToken | Customer, purpose (verification/recovery/activation), hashed token, expiry, consumption time. | Single-use, expiring, purpose-bound; raw token is not persisted. Exact channel/policy comes later. |
@@ -466,7 +466,7 @@ Relationships marked with provider- or policy-dependent entities express require
 | Checkout | Native ID, Cart, Customer optional per guest policy, contact, address snapshot, currency, line/price validation version, shipping/tax quote references, reservation state, lifecycle, expiry, idempotency context. | A Checkout cannot produce more than one accepted Order. Stale quotes/stock require revalidation. Completion is atomic/idempotent across order, stock and payment outcome rules. |
 | ShippingQuote/Selection | Checkout, service code/label, exact charge/currency, estimated delivery text/date if provided, provider/source reference, expiry. | Selected option must belong to a current quote and is snapshotted on Order. Provider payload is not the domain contract. |
 | TaxQuote/TaxLine | Checkout/order line or total scope, jurisdiction/type/rate where required, exact amount/currency, source reference, expiry/calculated time. | Tax totals reconcile to retained lines/rounding policy. Legal invoice fields follow approved policy. |
-| Order | Native ID, public order number, Customer/guest identity snapshot, lifecycle dimensions, currency, exact subtotal/shipping/tax/discount/total, accepted time, source/import mode. | Exactly one per completed Checkout/idempotency key. Money reconciles. Accepted historical snapshot is not changed when Product/Address changes. |
+| Order | Native ID, public order number, Customer/guest identity snapshot, lifecycle dimensions, currency, exact subtotal/shipping/tax/discount/total, accepted time, creation provenance. | Exactly one per completed native Checkout/idempotency key. Money reconciles. Accepted snapshot is not changed when Product/Address changes. Current test orders are not imported. |
 | OrderItem | Order, Product/Variant source refs where still present, title, option/variant label, optional SKU, media reference/snapshot, quantity, exact unit/subtotal/discount/tax/total. | Immutable commercial snapshot apart from explicit correction records; sums reconcile to Order. Product deletion cannot erase history. |
 | OrderAddress | Order, kind, all approved postal/contact fields. | Immutable shipping/billing snapshot; no dependency on mutable customer Address. |
 | PaymentAttempt | Checkout/Order, provider adapter, method, exact requested amount/currency, state, idempotency key, provider reference, timestamps/failure code. | Duplicate initiation/callback cannot duplicate charge/order. Payment state is distinct from order/fulfillment state. |
@@ -482,7 +482,7 @@ Relationships marked with provider- or policy-dependent entities express require
 | Role / Permission / AdminRole | Named role, stable permissions, assignments. | API enforces permission; UI hiding is supplementary. Initial role catalogue needs approval, but data design must not assume one all-powerful shared login. |
 | AuditEvent | Actor, action, target type/ID, time, request/correlation ID, before/after summary or safe change set, result. | Append-only, sensitive values redacted, attributable to human/system/import/provider. |
 | Inquiry | Native ID, Customer optional, submitted contact snapshot, requirement/message, status, timestamps. | Public submitter identity is not forced into a BMS user FK. Attachment is conditional. |
-| NewsletterSubscription | Normalized email, state, consent/source evidence, subscribed/unsubscribed timestamps. | Unique normalized email; unsubscribe/suppression is explicit. Existing rows migrate only with acceptable evidence. |
+| NewsletterSubscription | Normalized email, state, consent/source evidence, subscribed/unsubscribed timestamps. | Unique normalized email; unsubscribe/suppression is explicit. Current BMS subscriber rows do not migrate; future records are native if the capability is implemented. |
 | ExternalSourceMapping | Source system, source entity type, source ID, target type/ID, source version/hash, first/last import run. | Unique source tuple. Never a domain PK/FK exposed as native identity. Retention is bounded by reconciliation/archive need. |
 | ImportRun | Source/snapshot/watermark, configuration version, mode, state, started/completed time, counts/checksums. | Immutable run identity and input manifest. A rerun with the same input/config yields the same intended target result. |
 | ImportRecord / ImportIssue | Run, source key/hash, target mapping, action/result, warning/error details. | Supports resume, diagnosis, reconciliation and proof that failures were not silently skipped. No secrets/raw sensitive values in user-facing reports. |
@@ -646,22 +646,23 @@ The exact database engine and version are not inferable from business source. My
 | Collections | BMS custom categories | Primary source | Collection | BMS category ID -> native Collection | Shopify collections unless separately approved; inactive/stale records according to policy. |
 | Membership/order | BMS custom category products | Primary source after product mapping | CollectionProduct | BMS membership/source product ID -> native relationships | Orphan memberships and unapproved image overrides. |
 | Inventory | Authoritative Shopify/operations snapshot at cutover plus delta | BMS only discrepancy evidence | Location/Position/Movement initialization | Shopify variant ID -> native Variant; source snapshot reference | BMS aggregate as authority; historical guessed movements. |
-| Customers/addresses | Shopify export/Admin data if approved | BMS customer row comparison | Customer/Address | Shopify/BMS customer/address ID -> native IDs | Tokens, sessions, unapproved fields, duplicated BMS users. |
-| Wishlists | BMS `wishlists` if approved | Primary source after customer/product mapping | WishlistItem | BMS row/customer/product mappings | Snapshots as authority, rows with unresolved owners/products per policy. |
-| Historical orders | Shopify export/Admin data if approved | No CCA order source | Read-only/native Order snapshot or archive mode | Shopify order/line/customer/product IDs -> target/archive | BMS CCA orders/order_items. |
+| Customers/addresses | Excluded | None | New native Customer/Address records only | None | All current Shopify/BMS test customers, profiles, credentials, passwords, account links and addresses. |
+| Wishlists | Excluded | None | New native WishlistItem records only | None | All current BMS wishlist relationships and snapshots. |
+| Historical orders | Excluded | None | New native Order records only | None | All current Shopify/BMS test orders, transactions and fulfillments; no dedicated archive. |
 | Active carts | Shopify cart service | No durable source | Normally none; expire/bridge during cutover | Short-lived bridge mapping only if approved | Cart/customer tokens and expired carts. |
-| Inquiries | BMS `inquiries` if approved | Primary source with ownership repair | Inquiry | BMS row/customer correlation | Unapproved attachments and invalid BMS user/customer links. |
-| Newsletter | BMS subscriber rows with consent review | Primary candidate | NewsletterSubscription | BMS row/email evidence | Rows lacking acceptable consent/retention evidence. |
+| Inquiries | Excluded | None | New native Inquiry records only if/when the capability is implemented | None | All current BMS support/inquiry rows and attachments. |
+| Newsletter | Excluded | None | New native NewsletterSubscription records only if/when the capability is implemented | None | All current BMS subscriber/consent rows. |
+| Existing legal/financial information | Existing source only when safely reusable for an included requirement | Comparison evidence only | Relevant future tax/order evidence boundary | Bounded mapping only if a concrete included record is carried forward | No broad historical legal/financial dataset or invented migration requirement. |
 
 ### 10.2 Deterministic run protocol
 
 1. **Declare input manifest.** Record source, extraction method, schema/config version, full snapshot timestamp or incremental watermark, and expected page/range boundaries.
 2. **Extract read-only.** Use complete pagination/export. Never use the storefront first-100 list or nested truncated BMS mirror as completeness proof.
 3. **Stage outside the core model.** Preserve necessary source evidence in a protected, time-bounded import workspace. Do not expose raw source documents as Product/Customer/Order data.
-4. **Normalize deterministically.** Apply a versioned mapping configuration. Normalize identifiers, handles, option values, email, money, order, and controlled vocabularies consistently. Stable tie-breakers resolve equal source order.
-5. **Validate before write.** Report missing parents, duplicate source keys, handle/email/SKU-if-approved collisions, invalid option combinations, money/currency errors, missing media, orphan memberships, and unsupported values.
+4. **Normalize deterministically.** Apply a versioned mapping configuration. Normalize identifiers, handles, option values, money and controlled vocabularies consistently for included records. Stable tie-breakers resolve equal source order.
+5. **Validate before write.** Report missing parents, duplicate source keys, handle/SKU-if-approved collisions, invalid option combinations, money/currency errors, missing media, orphan memberships and unsupported values for included records; assert excluded record classes remain unwritten.
 6. **Upsert by external mapping.** The unique key is `(source system, source entity type, source ID)`, never mutable title/handle/email alone. Create or locate the native record, then persist/update the mapping in the same target transaction.
-7. **Resolve relationships after identities.** Product mappings precede collection/wishlist/order-line relations; customer mappings precede address/wishlist/order ownership.
+7. **Resolve relationships after identities.** Product mappings precede collection membership and included inventory/media relationships. No customer/address/wishlist/historical-order relationship pass is created for the excluded test-era data.
 8. **Protect target ownership.** An import updates only approved import-owned fields. If a native admin changed a field after the source version imported, raise a conflict instead of silently overwriting.
 9. **Reconcile.** Compare counts, source keys, hashes and domain totals; sample/render representative records; report unchanged/created/updated/skipped/warned/failed/orphaned records.
 10. **Prove rerun safety.** Running the same manifest/config twice must create no duplicates and produce no business-data changes on the second successful run.
@@ -670,14 +671,12 @@ The exact database engine and version are not inferable from business source. My
 
 ### 10.3 Required reconciliation outputs
 
-- source/target counts by entity and publication/account/order mode;
+- source/target counts by included entity/publication mode plus zero-target assertions for excluded classes;
 - every source key mapped once or intentionally excluded with reason;
 - product/variant/option/media/attribute/price/currency differences;
 - collection definition, membership and ordering differences;
 - inventory quantity, reservation, and available-to-sell cutover totals;
-- customer duplicate/collision/unresolved identity counts;
-- wishlist unresolved product/customer counts;
-- historical order counts and exact monetary total reconciliation by currency/date range;
+- proof that no current customer, address, wishlist, historical order, inquiry or newsletter source record created a target record or external mapping;
 - media copy existence, checksum/content-length where available, and target delivery check;
 - import failures/warnings and their disposition;
 - proof that Shopify/BMS received no mutations; and
@@ -762,28 +761,30 @@ Phase 2 detailed design and later implementation must include:
 15. Migration is versioned, deterministic, read-only toward Shopify/BMS, mapping-driven, dry-runnable, idempotent, conflict-aware and reconciled. Active carts do not migrate by default.
 16. Source-controlled storefront content remains source-controlled initially. Disconnected BMS CMS data is retired unless a separately approved CMS requirement replaces it.
 17. Current broken behavior—first-100 discovery, permissive availability, fake tracking, ineffective cancellation fallback, missing sitemap/logout assumptions, and stale BMS publication—is not preserved.
+18. Current test-era customers, credentials, addresses, wishlists, historical orders, inquiries and newsletter records do not migrate and receive no dedicated archive or linking flow. Native customer/address/wishlist/order and any future inquiry/newsletter capabilities start with new Vastriqo records.
+19. Cancellation, refund, return, exchange and customer-visible tracking are required future capabilities, but their detailed policies/workflows are designed progressively in the relevant post-purchase phase rather than inferred from broken current behavior.
 
-## 15. Earlier Candidate Business Decisions — Reclassified by Closure
+## 15. Earlier Candidate Business Decisions — Resolved or Bounded by Closure
 
-This list is retained to show what the conceptual-architecture pass initially grouped as business-dependent. The final closure register separates already-decided behavior, engineering choices, production validation and safe deferrals, leaving only its §22 as the current genuine business-decision list.
+This historical list shows what the conceptual-architecture pass initially grouped as business-dependent. The final closure register now records **no unresolved Phase 1 business decision**. Items below are either resolved, engineering/data-validation work, or deliberately assigned to the relevant later implementation phase.
 
-These are the consolidated decisions that source cannot answer:
+The original decision groups were:
 
 1. **Catalog policy:** approved classification/audience/color/size/attribute vocabulary; SKU/barcode/weight/brand/tag/compare-at/multi-currency/variant-media/SEO requirements; publication minimums; handle and merchandising-date/ranking policy.
 2. **Collections:** `/collections` information architecture and whether the current image override is product-wide, collection-specific, or retired.
 3. **Inventory:** locations, oversell/backorder, reservation/deduction/release timing, adjustment roles/reasons, and cutover ownership timing.
-4. **Customer/guest:** guest checkout, verification and phone policy, supported countries/address fields, cart expiry/merge, customer migration/activation/deduplication, and account/privacy retention.
+4. **Customer/guest:** existing customer/address migration is resolved as **do not migrate**; the native system starts clean. Guest checkout, verification/phone policy, wider country support and native account privacy/retention details remain later implementation policy.
 5. **Checkout commercial rules:** payment methods/provider/COD, shipping zones/services/rates/free shipping, tax/GST and invoice rules, discounts, fraud checks, quote/cart expiry, and required checkout consent.
-6. **Order operations:** lifecycle, order numbering, cancellation/refund/return/exchange, partial fulfillment, shipment/tracking visibility, notifications, and operational ownership.
-7. **Historical/auxiliary data:** import/archive/retention for Shopify orders, addresses, BMS wishlists, inquiries/attachments, newsletter consent records, and any active-cart bridge.
+6. **Order operations:** lifecycle and order numbering are detailed engineering design. Cancellation/refund/return/exchange and customer-visible tracking are required future capabilities whose workflows are designed progressively in the relevant post-purchase phase.
+7. **Historical/auxiliary data:** current test orders, customer addresses, BMS wishlists, inquiries/attachments and newsletter records are all **do not migrate**. Active carts still expire/use a bounded bridge by default.
 8. **Admin operating model:** initial roles/permissions, PII/address access, allowed order/payment/fulfillment actions, support/newsletter workflows, dashboards, bulk approval, and audit retention.
 9. **Content and external boundary:** CMS need, permanent CCA/BMS integration if any, analytics/consent, and whether wallet/referrals ever become a Vastriqo feature.
 
 ## 16. Recommended Phase 2 Scope
 
-Phase 2 should not build application code. The final closure register §23.6 is authoritative for its outputs. It should convert this conceptual model into detailed, reviewable contracts while scheduling validation/business checkpoints before the affected contract is frozen:
+Phase 2 should not build application code. The final closure register §23.6 is authoritative for its outputs. It should convert this conceptual model into detailed, reviewable contracts while scheduling production validation and later implementation-policy checkpoints before the affected contract is frozen:
 
-1. Schedule the genuine decisions and production inspections from the closure register; they do not block Phase 2 start.
+1. Schedule the remaining production inspections and later legal/post-purchase/provider decisions from the closure register; they do not block Phase 2 start.
 2. Record initialization ADRs from §11.2, including framework, database, identifiers, money, security/session and deployment baseline.
 3. Produce logical and physical database design with tables, keys, indexes, constraints, deletion/retention strategy, transaction/isolation behavior and lifecycle enums.
 4. Produce versioned OpenAPI contracts for public/customer/admin/integration surfaces, including errors, pagination, idempotency and authorization permissions.
@@ -801,8 +802,8 @@ After those designs are reviewed, Phase 3 may initialize/build `vastriqo-api`; P
 All of the following must be recorded and approved:
 
 1. Repository host/owner/access, peer directory location, default branch/protection, license/ownership, and fixed repository name `vastriqo-api`.
-2. Approved business decisions affecting catalog, inventory, guest/customer, checkout, order, migration, and admin write scope—or explicit deferrals with safe domain boundaries.
-3. Production source inventory: counts/limits, configured metafields, active collections/overrides, inventory shape, customer/order history volumes, and data-quality findings.
+2. Approved business decisions affecting catalog, inventory, guest/customer, checkout, order, migration, and admin write scope—including the clean-start/no-history-import decisions—or explicit later-phase deferrals with safe domain boundaries.
+3. Production source inventory for included migration/integration scope: product/variant/media counts and limits, configured metafields, active collections/overrides, inventory shape, checkout/provider configuration and relevant data-quality findings. Excluded test customer/order/auxiliary volumes are not prerequisites.
 4. Backend runtime/framework and exact supported versions; npm version/lockfile policy; strict TypeScript/build/lint/format conventions.
 5. Relational database engine/version/hosting, migration/query library, connection/pool policy, backup/restore expectation, and environment provisioning.
 6. Native identifier, UTC timestamp, exact money/currency/rounding, text/collation, soft-delete/retention and audit conventions.
@@ -833,7 +834,7 @@ All of the following must be recorded and approved:
 
 **Engineering conclusion:** the repository audit and conceptual architecture are complete. The system boundaries, domain ownership, required concepts, relationships, invariants, read/write responsibilities, provider boundaries, migration method, no-copy rules and application prerequisites are conceptually settled.
 
-**Final gate conclusion:** `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` establishes that **Phase 1 is complete and Phase 2 detailed design may begin**. Production-data validation and genuine business decisions gate only their affected contract/migration/cutover checkpoints; they do not block Phase 2 start.
+**Final gate conclusion:** `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` establishes that **Phase 1 is complete, every Phase 1 business decision is resolved, and Phase 2 detailed design may begin**. Remaining production-data validation and later implementation-phase policy decisions gate only their affected contract/cutover checkpoints; they do not block Phase 2 start.
 
 This does not authorize repository initialization, application code, database migrations or changes to the existing applications.
 

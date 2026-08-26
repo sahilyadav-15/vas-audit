@@ -1,7 +1,7 @@
 # Vastriqo Phase 1 — Closure and Final Decision Register
 
-Date: 2026-08-26 (Asia/Kolkata)  
-Status: **Phase 1 conceptually complete; safe to begin Phase 2 detailed design**  
+Date: 2026-08-26 (Asia/Kolkata); final business-decision reconciliation recorded 2026-08-26
+Status: **Phase 1 conceptually complete; all Phase 1 business decisions resolved; safe to begin Phase 2 detailed design**
 Scope: final requirements/architecture reconciliation only; no application code, repository, physical schema, migration, provider selection, or external write
 
 ## 1. Purpose and Governing Rule
@@ -68,12 +68,14 @@ Every item revisited in this closure has exactly one classification:
 | Guest checkout was treated as undecided because Shopify may have caused the login requirement. | The storefront demonstrably requires login for checkout; authenticated checkout is **A**. Guest checkout is **E**. |
 | Checkout phone/country rules were treated as open. | Current checkout requires first name, last name, a normalized 10-digit phone and India buyer context; preserving those is **A**. International commerce/phone verification are **E**. |
 | Cart merge and Buy Now semantics were treated as business blockers. | Current behavior has no login merge and Buy Now creates a separate purchase cart. Preserve both as **A**; enhanced merge/cross-device behavior is **E**. |
-| Tracking/cancellation/returns content was mixed with implemented behavior. | Fake tracking and ineffective cancellation behavior are not requirements. Honest contact-support cancellation request remains **A**; real self-service tracking/cancellation/returns/refunds/exchanges are **E** pending a future **D** policy decision. |
+| Tracking/cancellation/returns content was mixed with implemented behavior. | Fake tracking and ineffective cancellation behavior are not requirements. Honest contact-support cancellation request remains **A**; real self-service tracking/cancellation/returns/refunds/exchanges are required future capabilities whose detailed workflows/policies are **E** until the relevant post-purchase phase. |
 | Provider choice was mixed with capability need. | Payment, shipping, tax and fulfillment boundaries are **A**; provider selection is **E** and happens in detailed design/procurement. Actual Shopify configuration is **C** to preserve enabled behavior. |
 | Admin scope was broadly held for business approval. | Product, variants/options, media/specifications, publication, collections, inventory, customers, orders, payment/fulfillment operations, inquiries, imports/reconciliation and multiple independent admins are **A**. Complex RBAC/dashboard/CMS/generic settings are **E**. |
 | Framework/database/package selection was presented as a Phase 1 blocker. | Strict TypeScript, Node ecosystem, npm, modular monolith, relational persistence and OpenAPI are **B**. Exact framework/database/version ADRs are Phase 2 outputs, not Phase 1 blockers. |
 | Production inventories were treated as required before any Phase 2 design. | No production inspection blocks Phase 2 start. Selected checks must precede the relevant schema/import/provider contract freeze or migration dry run (§20). |
 | The previous readiness conclusion said Phase 2 could not begin. | Superseded: the foundation is sufficiently bounded. Phase 1 is complete and Phase 2 may begin, subject to the non-implementation boundary in §23. |
+| Customer, address, wishlist, inquiry, newsletter and historical-order migration were left as business choices. | The current records are test-era data and are explicitly excluded. New native capabilities remain required where already established, but the new platform starts with new customer accounts, addresses and orders. No account linking, activation, credential migration or dedicated archive is required. |
+| Legal/financial migration and post-purchase scope were grouped with Phase 1 blockers. | No broad legal/financial history migration will be created; already available information may be reused only when safe and useful. Detailed legal policies and required future cancellation/refund/return/exchange/tracking workflows are handled in their relevant implementation phases and do not reopen Phase 1. |
 
 ## 4. Domain 1 — Product / Catalog
 
@@ -172,10 +174,10 @@ Every item revisited in this closure has exactly one classification:
 | Concern | Final statement |
 | --- | --- |
 | Current established behavior | Customer account/login, profile, address CRUD/default, authenticated checkout and order history exist through Shopify/BMS. Checkout requires first/last name, normalized 10-digit phone and India buyer context. |
-| Future required capability | Native email/password registration/login, recovery/verification capability, secure revocable sessions/logout, one native profile, customer addresses/default and account continuity strategy. |
+| Future required capability | Native email/password registration/login, recovery/verification capability, secure revocable sessions/logout, one native profile and customer addresses/default. The customer system starts clean and creates new accounts going forward. |
 | Current external dependencies | Shopify Customer Accounts/Admin customer/address; BMS customer/token/JWT bridge; browser localStorage. |
 | Vastriqo-owned replacement | Customer, CustomerCredential, CustomerSession, purpose-bound AccountToken and CustomerAddress, with admin identity completely separate. |
-| Migration implication | Recreate credentials/sessions. Customer/profile/address import and activation use external mappings only if historical account continuity is selected. |
+| Migration implication | Do not migrate Shopify/BMS customers, addresses, passwords, credentials, sessions or account mappings. New Vastriqo customers register directly and create native addresses going forward. |
 
 ### 7.2 Final unresolved-item classification
 
@@ -191,9 +193,9 @@ Every item revisited in this closure has exactly one classification:
 | Guest checkout and international address support | **E** | Current flow is authenticated and India-oriented. Model can remain extensible without implementing either. | No block. |
 | Login cart merge, cross-device sessions and all-device logout UI | **E** | Not current behavior. Session revocation capability still exists server-side. | No block. |
 | Google/social login and CCA SSO | **E** | Previously explicitly deferred. | Identity provider extension boundary. |
-| Customer/profile/address source counts and fields | **C** | Inspect Shopify and BMS populations, duplicate/blank emails/phones, address counts/countries and drift between Shopify/BMS. | Required before customer migration specification only. |
-| Historical customer account continuity | **D** | Decide whether existing customers receive migrated/linked accounts with activation or must register anew. This materially affects customers and migration communication. | Does not block native identity schema/API; blocks account migration/cutover plan. |
-| Customer data retention/deletion/consent | **D** | Legal/business retention policy must be approved before importing or deleting personal history. | Privacy architecture can proceed; migration/cutover waits. |
+| Existing customer/profile/address migration | **A** | Do not migrate the current test users or addresses. Do not create linking, activation, deduplication, password or credential migration logic for them. | Excluded from migration design; native identity/address design proceeds for new records. |
+| Existing customer source inventory | **A** | No source counts or field-quality inspection is required for migration because the source class is excluded. Read-only inspection remains permissible only if later needed to retire a dependency safely. | No migration checkpoint. |
+| Future customer privacy/retention policy | **E** | Define deletion, retention, consent and export behavior for new native records during the relevant identity/legal implementation design. | Required before production rollout, not a Phase 1 or product/catalog blocker. |
 
 ## 8. Domain 5 — Wishlist
 
@@ -205,7 +207,7 @@ Every item revisited in this closure has exactly one classification:
 | Future required capability | Native Customer/Product saved relationship, pending-login handoff, current Product projection and unavailable-product handling. |
 | Current external dependencies | BMS wishlists, Shopify/BMS customer and product IDs. |
 | Vastriqo-owned replacement | WishlistItem relation owned by Customer/Wishlist module. |
-| Migration implication | Transform only after Customer and Product mappings; snapshots are comparison evidence, not display authority. |
+| Migration implication | Do not migrate current BMS wishlist rows or their snapshots. New wishlist relationships use only new native Customer and Product identities. |
 
 ### 8.2 Final unresolved-item classification
 
@@ -214,8 +216,7 @@ Every item revisited in this closure has exactly one classification:
 | Wishlist and pending-login behavior | **A** | Required current feature. | Required API/model. |
 | Ownership/uniqueness | **B** | One active Customer/Product relationship; add/remove are idempotent. Eliminate `user_id`/`customer_id` polymorphism. | Constraint/use-case required. |
 | Unavailable/deleted Product behavior | **B** | Retain the relation for history but mark unavailable and prevent purchase; do not serve stale snapshot as live Product. Permanent cleanup follows retention rules. | Read projection required. |
-| Wishlist rows, owner/product resolution and stale snapshots | **C** | Count rows and validate every Shopify customer/product reference and soft-deleted duplicate. | Required before wishlist import. |
-| Existing wishlist migration | **D** | Migrate when historical customer continuity is selected; otherwise archive/expire according to approved customer-data policy. | No block to native wishlist design. |
+| Existing wishlist migration | **A** | Do not migrate the current test-era BMS wishlist rows or snapshots. | Excluded from migration design; no source inventory or mapping is required. |
 | Named/shared lists, alerts, wishlist analytics/admin visibility | **E** | No current requirement and privacy impact. | No block. |
 
 ## 9. Domain 6 — Cart
@@ -268,7 +269,7 @@ Every item revisited in this closure has exactly one classification:
 | Actual enabled payment methods/COD/discount/shipping/tax/fraud behavior | **C** | Inspect Shopify production checkout/settings/test orders. Preserve only demonstrably enabled behavior or explicitly changed policy. | Required before provider/integration contract freeze, not Phase 2 start. |
 | Provider selection | **E** | Phase 2/procurement decision behind stable boundaries. | No domain-model block. |
 | Guest checkout, international checkout, stored payment methods, gift wrapping/messages, complex promotions, multi-shipment | **E** | Not established by current runtime. | No block. |
-| Checkout legal consent wording/requirements | **D** | Legal/business approval is required before final UI and retention evidence, not before modeling Checkout. | Blocks final checkout contract/content, not Phase 2 start. |
+| Checkout legal consent wording/requirements | **E** | Detailed legal/business approval is intentionally handled in the checkout implementation phase; the architecture retains consent/evidence boundaries without inventing wording now. | Required before final checkout production contract/content, not Phase 1. |
 
 ## 11. Domain 8 — Orders
 
@@ -280,7 +281,7 @@ Every item revisited in this closure has exactly one classification:
 | Future required capability | Native accepted Order/OrderItem/address/money snapshots, separate order/payment/fulfillment dimensions, customer paginated history/detail, admin search/operations and minimum fulfillment/shipment capability. |
 | Current external dependencies | Shopify Admin orders/transactions/fulfillment; BMS proxy. BMS CCA orders are unrelated. |
 | Vastriqo-owned replacement | Order aggregate plus Payment/Fulfillment/Shipment relations and immutable history. |
-| Migration implication | New orders are native. Historical Shopify orders may be imported read-only or archived; never use BMS CCA order tables. |
+| Migration implication | New orders are native. Do not import or build a dedicated archive for current Shopify/BMS test orders; never use BMS CCA order tables. |
 
 ### 11.2 Final unresolved-item classification
 
@@ -293,10 +294,10 @@ Every item revisited in this closure has exactly one classification:
 | Order number | **B** | Use a unique human-readable public number separate from opaque ID. Exact format/sequence and enumeration protection are Phase 2 engineering details. | Required identifier concept. |
 | Lifecycle design | **B** | Keep order, payment and fulfillment states separate; Phase 2 defines minimal transitions needed for placement, failure, cancellation-by-support and fulfillment without cloning Shopify enum names. | Detailed design task. |
 | Broken tracking button and cancel subject fallback | **B** | Remove false tracking action; preserve an honest support-contact path and correctly carry order reference. Do not model broken routing as cancellation. | Storefront later fixes after API exists. |
-| Actual order statuses, transactions, fulfillments, tracking and notification behavior | **C** | Sample production orders/configuration to distinguish real Shopify behavior from unused queried fields/static copy. | Required before historical mapping and provider workflow freeze. |
-| Historical Shopify order treatment | **D** | Choose full/limited read-only import, separate archive access, or no migration. Material customer/support/retention choice. | Does not block native Order schema/API; blocks historical migration/cutover. |
-| Tax invoice/GST document obligations | **D** | Legal/finance approval required before final invoice contract. | Tax/order model keeps extensible evidence; final document design waits. |
-| Customer self-service tracking/cancellation/refund/return/exchange and partial fulfillment | **E** | Not implemented current behavior. Add only after explicit operating policy. Provider refund primitives may exist without exposing a customer workflow. | No Phase 2 foundation block. |
+| Actual order statuses, transactions, fulfillments, tracking and notification behavior | **C** | Inspect representative current behavior only when designing the applicable native order/provider workflow; current test orders are not a migration source. | Required before the applicable provider/workflow contract freeze, not for historical mapping. |
+| Historical Shopify/BMS order treatment | **A** | Do not migrate current test orders and do not build a dedicated archive for them. | Excluded from migration design; native Order starts with post-cutover orders. |
+| Tax invoice/GST document obligations | **E** | Keep extensible evidence/document boundaries and approve detailed legal/finance policy in the relevant implementation phase. Do not invent or broadly migrate historical legal/financial records. | Required before final tax/invoice production contract, not Phase 1. |
+| Customer self-service tracking/cancellation/refund/return/exchange and partial fulfillment | **E** | These are required future capabilities, but the broken/incomplete current UI is not their specification. Inspect, obtain policy decisions and design them progressively in the relevant order/post-purchase phase. | No Product/Catalog or Phase 2 foundation block; not retired. |
 | Transactional notifications | **C** | Inspect actual Shopify notifications delivered today. If active, the event behavior is a replacement requirement; channel/provider selection remains deferred. | Required before notification integration contract/cutover. |
 
 ## 12. Domain 9 — Payment, Shipping and Tax
@@ -309,7 +310,7 @@ Every item revisited in this closure has exactly one classification:
 | Future required capability | Provider-neutral but Vastriqo-owned payment attempts/transactions, shipping quotes/selections/fulfillment handoff, tax quote/lines/evidence, verified callbacks, retry/idempotency and reconciliation. |
 | Current external dependencies | Shopify plus unknown configured gateway, carrier/rate, tax, notification and risk services. |
 | Vastriqo-owned replacement | Stable application/domain records and adapters; provider is not domain authority. |
-| Migration implication | Recreate integrations/configuration; transform only historical outcomes needed for imported orders; do not migrate credentials/raw provider payloads as domain data. |
+| Migration implication | Recreate integrations/configuration for new native orders. Current test order/payment/fulfillment history is excluded; do not migrate credentials or raw provider payloads as domain data. |
 
 ### 12.2 Final unresolved-item classification
 
@@ -324,8 +325,8 @@ Every item revisited in this closure has exactly one classification:
 | Actual tax/GST calculation and invoice output | **C** | Inspect Shopify tax settings, registrations, representative orders and invoices. | Required before tax/invoice contract freeze. |
 | Actual fraud and notification services | **C** | Inspect installed/configured services and observed checkout/order events. | Determines replacement scope before cutover. |
 | Provider selection, multiple providers, stored instruments, international duties, advanced promotion engine, wallet/split tender | **E** | Provider/procurement/future capabilities behind stable ports. | No Phase 2 start block. |
-| Legal tax/privacy/payment retention obligations | **D** | Legal/finance decision required before final production contract and retention schedule. | Does not block conceptual/initial detailed design. |
-| Refund/return commercial policy | **E** | Future policy/workflow; payment adapter may expose controlled refund operation when approved. | No foundation block. |
+| Legal tax/privacy/payment retention obligations | **E** | Detailed policies are deliberately assigned to their relevant implementation phase; retain appropriate evidence/extension boundaries without inventing policy now. | Required before the affected production contract, not Phase 1. |
+| Refund/return commercial policy | **E** | Cancellation/refund/return/exchange are required future capabilities. Their exact policy/workflow is designed progressively during the relevant post-purchase phase. | No Product/Catalog or foundation block; capability is not retired. |
 
 ## 13. Domain 10 — Admin Requirements
 
@@ -364,7 +365,7 @@ Every item revisited in this closure has exactly one classification:
 | Complex roles/permissions/SSO | **E** | Architecture keeps permission extension; no CCA/BMS shared auth. | No block. |
 | Advanced cancellation/refund/return/exchange/tracking operations | **E** | Added with approved order policy, not generic admin status mutation. | No block. |
 | CCA users/products/orders/invoices/transactions/seller/IoT/wallet modules | **A** | Explicitly outside Vastriqo and must not appear in `vastriqo-admin`. | Exclusion requirement. |
-| Newsletter export/suppression and PII/audit retention | **D** | Legal/operations approval before exposing subscriber data or setting retention. | Does not block core admin design. |
+| Newsletter export/suppression and PII/audit retention | **E** | Existing subscriber data will not migrate. Define policy only if/when the future native capability and admin workflow are implemented. | No core admin or Phase 2 block. |
 
 ## 14. Domain 11 — Migration Mapping
 
@@ -387,10 +388,10 @@ Every item revisited in this closure has exactly one classification:
 | Displayed metafield/metaobject specifications | **TRANSFORM** | Map readable business meanings into native attributes; no namespace/GID coupling. |
 | Publication/handle/merchandising timestamps | **TRANSFORM** | Map to explicit native publication/alias/merchandising concepts. |
 | Inventory | **RECREATE** | Initialize positions from authoritative cutover snapshot/delta; create initialization movements and reconcile. |
-| Customer/profile/address data | **DEFER** | Native capability exists; actual historical import follows the **D** account-continuity decision. |
-| Historical orders/transactions/fulfillment | **DEFER** | Native Order exists; import/archive follows the **D** history decision. |
+| Customer/profile/address data | **DO NOT MIGRATE** | Current records are test-era data. Start native accounts clean; no linking, activation, password/credential or address import. |
+| Historical orders/transactions/fulfillment | **DO NOT MIGRATE** | Current test orders need neither customer-visible history nor a dedicated archive. Native Order starts with post-cutover orders. |
 | Active carts/checkouts | **DEFER** | Expire or use a short-lived cutover bridge; not normal import. |
-| Shopify IDs needed for mapping/legacy link/historical archive | **ARCHIVE/RETAIN TEMPORARILY** | Store bounded ExternalSourceMapping; never native identity/runtime dependency. |
+| Shopify IDs needed for included product/catalog mapping or route continuity | **ARCHIVE/RETAIN TEMPORARILY** | Store bounded ExternalSourceMapping only for included records/reconciliation/redirects; never create mappings for excluded customers, addresses or test orders and never use source IDs as native identity. |
 | Raw GraphQL shape, unused fields, access/customer tokens, sessions, secrets | **DO NOT MIGRATE** | Not domain data; revoke/delete after dependency exit. |
 
 ### 14.3 BMS migration classes
@@ -400,11 +401,11 @@ Every item revisited in this closure has exactly one classification:
 | Active custom collections and membership/order | **TRANSFORM** | Map through native Product IDs; validate staleness/orphans/order. |
 | Live product-wide card image overrides | **TRANSFORM** | Only where data validation proves a difference/current use. |
 | Product mirror rows/JSON and source/sync metadata | **ARCHIVE/RETAIN TEMPORARILY** | Reconciliation evidence only; never Product schema. |
-| Wishlists | **DEFER** | Transform after customer-continuity decision and Customer/Product mappings. |
-| Inquiries | **DEFER** | Transform with corrected ownership if support history retention is approved. New inquiry capability is not deferred. |
-| Newsletter subscribers | **DEFER** | Import only with acceptable consent/retention evidence. New subscription capability is not deferred. |
+| Wishlists | **DO NOT MIGRATE** | Current test-era relationships/snapshots are excluded. New native wishlist capability remains required. |
+| Inquiries | **DO NOT MIGRATE** | Current test-era support/inquiry records and attachments are excluded. Future native inquiry capability remains independent of this data decision. |
+| Newsletter subscribers | **DO NOT MIGRATE** | Current test-era subscriber/consent rows are excluded. Future native subscription capability remains independent of this data decision. |
 | Source-controlled storefront content/navigation | **RECREATE** | Keep in `vastriqo` source initially; do not import disconnected BMS CMS. |
-| Shopify/BMS external correlation IDs | **ARCHIVE/RETAIN TEMPORARILY** | Bounded mappings for import/reconciliation/archive only. |
+| Shopify/BMS external correlation IDs | **ARCHIVE/RETAIN TEMPORARILY** | Bounded mappings only for included product/catalog/collection/inventory import, reconciliation or redirects; none for excluded customer/order/auxiliary records. |
 | Customer/access/admin tokens, JWT/session data, Shopify admin tokens | **DO NOT MIGRATE** | Recreate credentials/sessions securely. |
 | BMS storefront pages/menus, wallet/referral side effects | **DO NOT MIGRATE** | No active storefront requirement; future features are separate. |
 | CCA products/orders/users/invoices/transactions/seller/fabric/IoT/finance data | **DO NOT MIGRATE** | Outside Vastriqo domain. |
@@ -416,9 +417,10 @@ Every item revisited in this closure has exactly one classification:
 | Deterministic/idempotent/read-only migration protocol | **B** | Unique `(source system, type, ID)` mapping; versioned manifest/config/hash; dry run; relationship passes; safe rerun; conflict/tombstone reporting; no source writes. | Detailed specification in Phase 2. |
 | Source completeness/counts/quality | **C** | Execute checklist in §20 using complete sources. | Required before mapping freeze/dry run. |
 | Product/collection/inventory migration | **A** | Required for independent catalog cutover. | Required Phase 2 mapping design. |
-| Customer/address/wishlist historical import | **D** | Follows account continuity, consent and retention decision. | Native model proceeds; import plan waits. |
-| Historical order import/archive | **D** | Choose scope/mode/horizon. | Native model proceeds; historical mapping waits. |
-| Inquiry/newsletter historical retention/import | **D** | Support/legal decision; new native capability remains required. | No core architecture block. |
+| Customer/address/wishlist historical import | **A** | Do not migrate current test-era records or create account-linking/activation logic. | Excluded from mapping and validation scope. |
+| Historical order import/archive | **A** | Do not migrate or create a dedicated archive for current test orders. | Excluded from mapping and validation scope. |
+| Inquiry/newsletter historical retention/import | **A** | Do not migrate current test-era records. New native capabilities remain separate requirements. | Excluded from mapping and validation scope. |
+| Existing legal/financial information | **A** | No broad historical migration project. Carry forward only already available information that proves safely and straightforwardly reusable for an included target requirement. | Case-by-case mapping evidence only; no dedicated migration stream. |
 | Active cart migration | **E** | Default expire/bridge; no durable migration work now. | No block. |
 | Continuous Shopify/BMS sync after cutover | **E** | Explicitly outside final architecture. Only bounded cutover delta is allowed. | No block. |
 | Source record disappearance | **B** | Produce tombstone discrepancy; never delete native records automatically during import. | Required reconciliation rule. |
@@ -586,7 +588,7 @@ No migration script or physical migration is authorized by this Phase 1 closure.
 
 ## 20. Production Data Validation Checklist
 
-No item below blocks **starting** Phase 2. “Required before” identifies the later design/import checkpoint it protects.
+No item below blocks **starting** Phase 2. “Required before” identifies the later design/import checkpoint it protects. The excluded test-era customer, address, wishlist, order, inquiry and newsletter classes require no migration inventory or validation; their earlier proposed inspections were removed rather than marked complete.
 
 | Inspection | Source | Why | Required before |
 | --- | --- | --- | --- |
@@ -610,12 +612,6 @@ No item below blocks **starting** Phase 2. “Required before” identifies the 
 | Shipping profiles/zones/services/rates/free-shipping/carrier behavior | Shopify settings/orders | Preserve real delivery choices/charges | Shipping integration contract |
 | Tax registrations/settings/rates/order tax lines/invoice output | Shopify + finance/legal evidence | Define compliant replacement | Tax/invoice contract |
 | Fraud/risk and transactional notification configuration/events | Shopify/apps/observed orders | Identify hidden required external behavior | Integration/cutover plan |
-| Customer count, profile completeness, duplicate email/phone and BMS drift | Shopify/BMS | Plan optional account migration/activation | Customer migration specification |
-| Address count/countries/defaults | Shopify | Plan optional address migration and validate India assumption | Customer migration specification |
-| Wishlist active/deleted rows and resolvable customer/product mappings | BMS | Plan conditional transformation | Wishlist migration dry run |
-| Inquiry rows/status/owner mismatch/attachments | BMS | Decide support-history import and fix identity | Inquiry migration specification |
-| Newsletter rows/source/consent/unsubscribe evidence | BMS | Determine legally acceptable import | Newsletter migration approval |
-| Historical order count/date range/status/money/lines/fulfillment/tracking | Shopify | Size and reconcile chosen archive/import mode | Historical-order migration specification |
 | Deployed sitemap/logout/generic-product routes absent locally | Deployed BMS/Vastriqo read-only inspection | Confirm no deployed-only behavior is lost | Storefront cutover compatibility plan |
 | Analytics destinations/events/consent behavior | Deployed storefront/config | Preserve only approved measurement safely | Analytics reconfiguration, not commerce architecture |
 
@@ -644,9 +640,9 @@ No item below blocks **starting** Phase 2. “Required before” identifies the 
 | Authenticated India checkout baseline | **ALREADY DECIDED** | Current storefront | No |
 | Secure revocable sessions/recovery/verification capability | **ENGINEERING DECISION** | Security required by native identity | No |
 | Guest/international/social login/phone verification | **SAFE TO DEFER** | Not current behavior | No |
-| Existing customer account continuity/import | **BUSINESS DECISION** | Material customer/migration choice | No; blocks migration plan only |
+| Existing customer account continuity/import | **ALREADY DECIDED** | Start clean; current accounts are test users and will not migrate/link/activate | No |
 | Wishlist | **ALREADY DECIDED** | Current storefront | No |
-| Existing wishlist import | **BUSINESS DECISION** | Follows customer continuity/retention | No |
+| Existing wishlist import | **ALREADY DECIDED** | Current test-era wishlist rows will not migrate | No |
 | Anonymous Cart / no merge / separate Buy Now | **ALREADY DECIDED** | Current storefront | No |
 | Cart expiry/concurrency/pricing rules | **ENGINEERING DECISION** | Safe server ownership | No |
 | Checkout orchestration capability | **ALREADY DECIDED** | Current purchase behavior | No |
@@ -656,9 +652,12 @@ No item below blocks **starting** Phase 2. “Required before” identifies the 
 | Payment/shipping/tax provider | **SAFE TO DEFER** | Provider not selected; boundary fixed | No |
 | Native Order/history/items/money/status | **ALREADY DECIDED** | Current storefront | No |
 | Fulfillment/shipment operations | **ALREADY DECIDED** | Required to complete accepted physical orders | No |
-| Self-service tracking/cancel/refund/return/exchange | **SAFE TO DEFER** | Current UI/workflows are absent/broken | No |
-| Historical order import/archive | **BUSINESS DECISION** | Material retention/customer choice | No; blocks history migration only |
-| Tax/legal/invoice obligations | **BUSINESS DECISION** | Not inferable from source | No; blocks final tax/invoice contract |
+| Self-service tracking/cancel/refund/return/exchange | **SAFE TO DEFER** | Required future capability; current broken/incomplete behavior is not the target specification | No; design progressively in its relevant phase |
+| Historical order import/archive | **ALREADY DECIDED** | Current test orders will not migrate and need no dedicated archive | No |
+| Existing address import | **ALREADY DECIDED** | Current test-user addresses will not migrate | No |
+| Existing inquiry/newsletter import | **ALREADY DECIDED** | Current test-era records will not migrate | No |
+| Existing legal/financial migration | **ALREADY DECIDED** | No broad project; only safely reusable existing information may be carried forward where useful | No |
+| Detailed tax/legal/invoice/privacy/consent policy | **SAFE TO DEFER** | Decide in the affected implementation phase behind established boundaries | No; required before affected production rollout |
 | Independent multiple-admin management | **ALREADY DECIDED** | Project direction | No |
 | Required commerce admin modules | **ALREADY DECIDED** | Replacement operations | No |
 | Complex RBAC/dashboard/CMS/generic settings | **SAFE TO DEFER** | Not required now | No |
@@ -671,35 +670,35 @@ No item below blocks **starting** Phase 2. “Required before” identifies the 
 
 Each row has one final classification. Capabilities, their engineering representation and their production validation are separated into distinct decisions where necessary.
 
-## 22. Genuine Business Decisions Remaining
+## 22. Phase 1 Business Decisions — Final Resolution
 
-Only these concise decisions remain, and none blocks Phase 2 **start**:
+No genuine Phase 1 business decision remains unresolved:
 
-1. **Existing customer continuity:** migrate/link existing customer accounts and addresses with activation, or require new registration?
-2. **Historical customer data:** migrate existing wishlists and support history, subject to consent/retention, or archive/expire them?
-3. **Historical orders:** import all/limited orders read-only, provide a separate archive, or do not migrate customer-visible history?
-4. **Legal/financial policy:** approve tax/GST/invoice, privacy/retention and checkout consent obligations before their final contracts and production rollout.
-5. **Post-purchase expansion:** when desired, approve the commercial policy for self-service cancellation, refund, return, exchange and customer-visible tracking. These are currently deferred, not Phase 1 blockers.
-6. **Newsletter/support retention:** approve whether existing subscriber/inquiry records have sufficient legal/operational value and consent to import.
+1. **Customer clean start:** do not migrate/link current Shopify or BMS customer accounts, profiles, credentials, passwords or addresses. New customers register directly with Vastriqo and create new native addresses.
+2. **Historical customer data:** do not migrate current wishlists or support/inquiry history.
+3. **Historical orders:** do not migrate current test orders and do not create a dedicated archive for them. New customer-visible order history begins with native post-cutover orders.
+4. **Newsletter/support records:** do not migrate current subscriber or inquiry records. This does not retire future native capabilities.
+5. **Legal/financial data:** do not create a broad historical migration project. Already available information may be carried forward only when it is safely and straightforwardly reusable for an included requirement. Detailed GST/tax/invoice/privacy/consent policy is deliberately decided in the relevant implementation phase.
+6. **Post-purchase capabilities:** cancellation, refund, return, exchange and customer-visible tracking are required future capabilities. They will be inspected, decided and designed progressively during the relevant order/post-purchase phase; current broken/incomplete behavior is not the target.
 
-Provider selection, framework selection, database engine selection and exact technical state machines are engineering/Phase 2 decisions, not business questions.
+Provider selection, framework selection, database engine selection, exact technical state machines, detailed legal policy and detailed post-purchase operating rules are later-phase decisions at their applicable design/implementation checkpoints. They are not unresolved Phase 1 decisions and do not block Phase 2 or Product/Catalog work.
 
 ## 23. Phase 1 Completion Gate
 
 ### 23.1 Is Phase 1 conceptually complete?
 
-**Yes.** Current behavior, target ownership, domain concepts, cross-domain invariants, public/admin/import responsibilities, dependency exits, migration safety and defer boundaries are sufficiently defined.
+**Yes.** Current behavior, target ownership, domain concepts, cross-domain invariants, public/admin/import responsibilities, dependency exits, migration safety and defer boundaries are sufficiently defined, and all Phase 1 business decisions are resolved.
 
 ### 23.2 Which remaining items prevent detailed Phase 2 database/API design?
 
-**None prevent Phase 2 from starting.** Phase 2 must keep conditional concepts extensible and must not finalize the affected migration/provider/legal contracts before the relevant **C** validation or **D** decision.
+**None prevent Phase 2 from starting.** No **D** item remains for Phase 1. Phase 2 must keep conditional concepts extensible and must not finalize affected product, inventory or provider contracts before their relevant **C** validation; later legal and post-purchase policy is approved at the applicable implementation checkpoint.
 
 The earliest design checkpoints are:
 
 - production metafield/options/variant inspection before catalog attribute/import mapping freeze;
 - inventory location/policy inspection before inventory schema/sellability contract freeze;
 - checkout/payment/shipping/tax inspection before external integration contract freeze; and
-- customer/order/auxiliary inventories plus decisions before historical migration specifications freeze.
+- explicit exclusion assertions for test-era customer/order/auxiliary records in migration manifests and dry-run reports.
 
 ### 23.3 Which items are safely deferred?
 
@@ -708,7 +707,7 @@ The earliest design checkpoints are:
 - compare-at/promotions, variant-media switching and brand/SEO override UI;
 - advanced warehouse operations;
 - saved/multiple/cross-device carts;
-- self-service cancellation/refund/return/exchange/tracking and advanced partial fulfillment;
+- detailed self-service cancellation/refund/return/exchange/tracking workflows and advanced partial fulfillment until the relevant order/post-purchase phase; the capabilities themselves remain required future work;
 - multiple providers, stored payment instruments, wallet/referrals and complex promotions;
 - dashboard, CMS, complex RBAC/SSO and optional admin analytics;
 - microservices, GraphQL, cache/search/event/data platforms until measured need.
@@ -734,7 +733,7 @@ All inspections in §20. None blocks architecture or Phase 2 start. They gate on
 7. Field-level Shopify/BMS mapping, import manifests, dry-run reports, reconciliation rules, delta/cutover and rollback specifications.
 8. `vastriqo-admin` information architecture and workflows against authorized API commands.
 9. Test, security, performance, observability, backup/restore, deployment and cutover acceptance plans.
-10. A checkpoint schedule for the **C** validations and **D** decisions that must occur before affected contract freezes.
+10. A checkpoint schedule for the remaining **C** validations and later-phase legal/post-purchase/provider decisions that must occur before affected contract freezes or production rollout.
 
 ### 23.7 What must not be implemented yet?
 
