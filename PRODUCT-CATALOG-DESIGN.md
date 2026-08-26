@@ -1,7 +1,7 @@
 # Vastriqo Product/Catalog Analysis and Conceptual Design
 
 Date: 2026-08-25 (Asia/Kolkata)  
-Status: **Analysis complete; cross-domain decisions continued in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md`**  
+Status: **Analysis complete; unresolved items finally classified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`**
 Scope: Phase A repository/source inspection and Phase B product dependency analysis only
 
 ## 1. Purpose, Scope, and Evidence
@@ -621,7 +621,7 @@ At minimum report source versus target:
 
 ## 15. Questions Requiring User/Business Decision
 
-This section records the decision gaps found when the product vertical slice was analyzed. The later full-platform architecture resolves three cross-domain questions: native collections/ordered membership are included now (#16), independent admin authentication/authorization is required before admin writes (#18), and the API uses the selected-convention rules in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` §11 (#19). Repository location/framework/database details (#17) remain initialization ADRs. The still-genuine business questions are consolidated, without duplication, in that document §15.
+This section records the decision gaps found when the product vertical slice was analyzed. The later full-platform architecture resolved three cross-domain questions: native collections/ordered membership are included now (#16), independent admin authentication/authorization is required before admin writes (#18), and the API uses the selected-convention rules in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` §11 (#19). `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` now reclassifies every remaining item into already decided, engineering decision, production-data validation, genuine business decision or safe deferral. This retained list is not the current approval gate.
 
 ### 15.1 Product semantics
 
@@ -680,12 +680,7 @@ This analysis intentionally did not assume:
 
 ## 17. Stop Gate
 
-Phase A repository inspection and Phase B product dependency analysis are complete. No implementation should begin until:
-
-1. the applicable business decisions in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` §15 are answered or explicitly deferred;
-2. production product/metafield/collection/inventory data is inventoried non-destructively where marked;
-3. the full conceptual domain boundary is approved; and
-4. the exact API/admin prerequisites in the full architecture §§17–18 are approved.
+Phase A repository inspection and Phase B product dependency analysis are complete. The final closure register establishes that Phase 2 detailed design may begin without waiting for every optional product/provider/data choice. Production product/metafield/collection/inventory validation must occur before the affected catalog/import contracts are frozen. Application implementation and repository initialization remain outside Phase 2 and are not authorized here.
 
 No application source, configuration, dependency, database, Shopify data, or BMS data was changed to produce this document.
 

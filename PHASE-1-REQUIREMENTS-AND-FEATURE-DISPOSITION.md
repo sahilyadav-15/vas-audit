@@ -1,7 +1,7 @@
 # Phase 1 — Vastriqo Requirements and Feature Disposition
 
-Date: 2026-08-24; architecture continuation recorded 2026-08-25 (Asia/Kolkata)  
-Status: **Requirements baseline complete; business approval pending**  
+Date: 2026-08-24; closure reconciliation recorded 2026-08-26 (Asia/Kolkata)
+Status: **Requirements baseline complete; unresolved items reclassified by the Phase 1 closure register**
 Scope: requirements and feature decisions only; no implementation, schema, endpoint, migration-script, provider, or infrastructure design
 
 ## 1. Purpose and Status
@@ -18,7 +18,7 @@ This is Phase 1 requirements and feature-disposition work. It distinguishes:
 
 It is not an implementation plan. It does not choose frameworks, physical tables, endpoints, providers, deployment topology, or detailed state machines. No application source, configuration, dependency, database, Shopify data, or BMS data is changed by this work.
 
-`PRODUCT-CATALOG-DESIGN.md` and `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` continue this baseline into the product vertical slice and full commerce conceptual architecture. The latter document is authoritative for consolidated current decisions, remaining business decisions, initialization prerequisites, and Phase 1 readiness.
+`PRODUCT-CATALOG-DESIGN.md` and `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` continue this baseline into the product vertical slice and full commerce conceptual architecture. `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` is now authoritative for final A–E classifications, remaining business decisions and Phase 1 readiness.
 
 ### Evidence and decision notation
 
@@ -466,6 +466,8 @@ The independent capabilities for payment, shipping, tax, identity, inventory, or
 
 ## 13. Open Business Decisions
 
+Closure note: this broad list is retained as the requirements-stage discovery record. It has been narrowed and reclassified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Items established by the current storefront are no longer treated as approval questions; engineering choices and production-data checks are separated from genuine business decisions.
+
 These decisions materially affect Phase 2 domain, API, data, or admin design and require approval:
 
 1. **Catalog taxonomy and audience:** What are the approved product type/category, Men/Women/Kids/audience, color, size, tag, and brand/vendor vocabularies? This determines classification, filters, collections, attributes, and migration normalization.
@@ -490,7 +492,7 @@ Provider names, framework choices, and physical design are intentionally not bus
 
 ## 14. Phase 1 Acceptance Criteria
 
-Phase 1 requirements are sufficiently defined to begin Phase 2 when all of the following are true:
+This list was the conservative requirements-stage acceptance proposal. The final closure review found that several entries can be satisfied as Phase 2 checkpoints rather than prerequisites to start it. `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §23 is the authoritative completion gate. The following remain useful acceptance/cutover checks:
 
 - every meaningful audited feature has one approved disposition;
 - the target independence boundary and CCA/BMS separation are approved without exceptions hidden in implementation plans;
@@ -509,9 +511,7 @@ Phase 1 requirements are sufficiently defined to begin Phase 2 when all of the f
 
 ### Current readiness assessment
 
-This document establishes a reviewable Phase 1 baseline, but **Phase 1 is not yet fully approved or ready to enter detailed Phase 2 design without additional business decisions**. The highest-impact blockers are catalog taxonomy/operational fields, production metafield validation, inventory policy, guest/cart rules, customer migration/verification, checkout/payment/shipping/tax requirements, order/returns/fulfillment policy, historical-data scope, and the first-release admin operating scope.
-
-Phase 2 preparation can review the evidence and prepare decision workshops, but it must not freeze physical schemas or API contracts around the undecided items.
+This requirements document originally treated several policy, provider and production-data items as a single Phase 2 gate. The later source-led closure separates them. **Phase 1 is conceptually complete and Phase 2 detailed design may begin.** Conditional contract freezes and migration plans still wait for the specific validation or business decision identified in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §§20–23.
 
 ## 15. Recommended Phase 2 Inputs
 
@@ -526,4 +526,4 @@ Once the Phase 1 acceptance criteria are met, Phase 2 should consume:
 - the migration-scope classifications and validated source inventories; and
 - the resolved business-decision log plus explicitly deferred items.
 
-The conceptual domain model and platform boundaries now exist in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md`. Using the approved inputs above, Phase 2 may produce the physical database schema and constraints, API contracts, detailed authentication/authorization design, lifecycle/concurrency rules, field-level migration specifications, and admin workflow contracts. None of those physical or executable designs is created by this requirements document.
+The conceptual domain model and platform boundaries exist in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` and are closed by `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Phase 2 should now produce the physical database schema and constraints, API contracts, detailed authentication/authorization design, lifecycle/concurrency rules, field-level migration specifications, and admin workflow contracts. None of those physical or executable designs is created by this requirements document.

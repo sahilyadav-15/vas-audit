@@ -2,7 +2,7 @@
 
 ## Overall Status
 
-Phase 1 — Target Architecture & Requirements has an engineering-complete conceptual architecture. Business approval, production source-data validation, and repository-initialization ADRs remain open, so Phase 1 is not yet approved and neither target application should be initialized.
+Phase 1 — Target Architecture & Requirements is complete. The final closure register separates established requirements, engineering decisions, production-data validation, genuine business decisions and safe deferrals. Phase 2 detailed data/API design may begin; neither target application should be initialized in Phase 2.
 
 ## Current Architecture
 
@@ -18,10 +18,10 @@ Phase 1 — Target Architecture & Requirements has an engineering-complete conce
 Status: Complete
 
 ### Phase 1 — Target Architecture & Requirements
-Status: Engineering Complete; Approval Pending
+Status: Complete
 
 ### Phase 2 — Detailed Data & API Design
-Status: Not Started
+Status: Ready to Start
 
 ### Phase 3 — Build Vastriqo API & Database Foundation
 Status: Not Started
@@ -53,6 +53,7 @@ Status: Not Started
 - Completed `PHASE-1-REQUIREMENTS-AND-FEATURE-DISPOSITION.md`, classifying audited behavior and dependency exit requirements.
 - Completed `PRODUCT-CATALOG-DESIGN.md`, including the product/variant/media/attribute conceptual slice and source mapping.
 - Completed `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` across catalog, merchandising, inventory, identity, wishlist, cart, checkout, orders, provider boundaries, admin, migration, API, and database design.
+- Completed `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`, reconciling all earlier unresolved items and closing the Phase 1 gate.
 - Resolved the target as a strict-TypeScript modular monolith with a dedicated transactional relational database, native Vastriqo identities, separate public/customer/admin/integration boundaries, deterministic imports, and no final Shopify/BMS core dependency.
 - Created this living progress report for implementation status and next-step tracking.
 
@@ -66,30 +67,27 @@ Status: Not Started
 - `vastriqo-admin` and `bms-admin` may link to each other as separate applications; shared SSO is optional and deferred until explicitly designed.
 - The migration will preserve appropriate storefront behavior and remove dependencies progressively, with validation before cutover.
 
-## Open Decisions
+## Non-Blocking Decisions and Validation
 
-The consolidated register in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` §15 is authoritative. The remaining business decisions are limited to:
+The authoritative register is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Remaining business decisions do not block Phase 2 start and are limited to:
 
-- catalog taxonomy and conditional operational/product fields;
-- collection landing and card-image override meaning;
-- inventory location, reservation, deduction, adjustment, and oversell policy;
-- guest checkout, verification/phone/address policy, cart merge/expiry, and customer migration;
-- payment/COD, shipping, tax/GST, discounts, fraud, consent, and quote-expiry policy;
-- order numbering/lifecycle, cancellation/refund/return/exchange, fulfillment/tracking, and notifications;
-- historical and auxiliary data migration/retention;
-- admin roles, permitted operations, PII access, support/CMS/dashboard scope, and audit retention; and
-- permanent CCA/BMS integration, analytics/consent, and wallet/referral disposition.
+- existing customer account continuity and personal-data retention;
+- historical wishlist/support/newsletter retention/import;
+- historical order import/archive scope;
+- tax/GST/invoice, privacy and checkout-consent obligations; and
+- future post-purchase self-service policies when those deferred features are activated.
 
-Separate initialization ADRs must select exact framework/database/version, identifier/money/session, deployment/security, testing/observability, and admin-UI conventions. The architecture already fixes npm, strict TypeScript, modular-monolith, relational, OpenAPI, native-identity, and independence principles.
+Production validation and Phase 2 ADRs are scheduled checkpoints, not Phase 1 blockers. Exact framework/database/version, identifier/money/session, deployment/security, testing/observability and admin-UI choices belong to Phase 2 detailed design.
 
-## Current Blockers
+## Implementation Gates
 
-- The separate `vastriqo-api` and `vastriqo-admin` Git repositories have not yet been created; this is intentional and no application initialization has started.
-- The conceptual architecture is complete, but the genuine business decisions, production source inventories, and initialization ADRs listed in `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` §§15, 17, and 18 are not yet approved.
+- No blocker prevents Phase 2 detailed design from starting.
+- The separate `vastriqo-api` and `vastriqo-admin` repositories do not exist; this is intentional. They must not be initialized until the applicable Phase 2 detailed designs and repository prerequisites are approved.
+- Production validations must complete before their affected schema/import/integration contracts are frozen, as listed in the closure register §20.
 
 ## Next Step
 
-- Review and approve `PHASE-1-CONCEPTUAL-ARCHITECTURE.md`, resolve its consolidated business decisions, validate production source inventories, and record the initialization ADRs. Phase 2 can then freeze the physical schema, API/security contracts, lifecycle/concurrency design, migration specifications, and admin workflows before either repository is initialized.
+- Begin Phase 2 detailed design using the final closure register: ADRs, physical relational schema, OpenAPI/security contracts, lifecycle/concurrency sequences, provider boundaries, field-level migration/reconciliation specifications, admin workflows and validation checkpoints. Do not initialize either target repository or implement code in Phase 2.
 
 ## Change Log
 
@@ -104,3 +102,9 @@ Separate initialization ADRs must select exact framework/database/version, ident
 - Completed the Phase 1 requirements disposition, product/catalog conceptual design, and full commerce conceptual architecture.
 - Recorded exact `vastriqo-api` and `vastriqo-admin` initialization prerequisites.
 - Marked Phase 1 engineering work complete with business approval and data-validation gates still pending.
+
+### 2026-08-26
+
+- Reclassified every unresolved item as already decided, engineering decision, production-data validation, genuine business decision or safe deferral.
+- Reconciled stale questions and readiness statements across the Phase 1 documents.
+- Closed Phase 1 and marked Phase 2 detailed design ready to start without authorizing application/repository initialization.

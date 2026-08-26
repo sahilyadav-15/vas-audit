@@ -1,7 +1,7 @@
 # Vastriqo Phase 1 — Conceptual Commerce Architecture
 
-Date: 2026-08-25 (Asia/Kolkata)  
-Status: **Engineering architecture complete; business approval and source-data validation pending**  
+Date: 2026-08-25; closure reconciliation recorded 2026-08-26 (Asia/Kolkata)
+Status: **Conceptual architecture complete; final readiness governed by `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`**
 Implementation status: **No application code, repository, database, migration, or external data was created or changed**
 
 ## 1. Purpose and Outcome
@@ -11,6 +11,8 @@ This document completes the source-audit-to-conceptual-architecture step for the
 - `PHASE-1-FUNCTIONAL-DEPENDENCY-AUDIT.md`;
 - `PHASE-1-REQUIREMENTS-AND-FEATURE-DISPOSITION.md`; and
 - `PRODUCT-CATALOG-DESIGN.md`.
+
+`PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` subsequently reconciles the unresolved items under the rule that demonstrated storefront capabilities are replacement requirements. It is authoritative where the earlier “needs business input” lists or readiness conclusion differ from the final A–E classification.
 
 The specialized product document remains the detailed catalog evidence record. This document resolves the wider platform boundaries and connects product/catalog to collections, inventory, identity, wishlist, cart, checkout, orders, payment/shipping/tax, admin, migration, API, and database responsibilities.
 
@@ -761,7 +763,9 @@ Phase 2 detailed design and later implementation must include:
 16. Source-controlled storefront content remains source-controlled initially. Disconnected BMS CMS data is retired unless a separately approved CMS requirement replaces it.
 17. Current broken behavior—first-100 discovery, permissive availability, fake tracking, ineffective cancellation fallback, missing sitemap/logout assumptions, and stale BMS publication—is not preserved.
 
-## 15. Genuine Remaining Business Decisions
+## 15. Earlier Candidate Business Decisions — Reclassified by Closure
+
+This list is retained to show what the conceptual-architecture pass initially grouped as business-dependent. The final closure register separates already-decided behavior, engineering choices, production validation and safe deferrals, leaving only its §22 as the current genuine business-decision list.
 
 These are the consolidated decisions that source cannot answer:
 
@@ -777,9 +781,9 @@ These are the consolidated decisions that source cannot answer:
 
 ## 16. Recommended Phase 2 Scope
 
-Phase 2 should not build application code. It should convert this approved conceptual model into detailed, reviewable contracts in this order:
+Phase 2 should not build application code. The final closure register §23.6 is authoritative for its outputs. It should convert this conceptual model into detailed, reviewable contracts while scheduling validation/business checkpoints before the affected contract is frozen:
 
-1. Resolve the business decisions in §15 and inventory production catalog/collection/inventory/custom-field volumes.
+1. Schedule the genuine decisions and production inspections from the closure register; they do not block Phase 2 start.
 2. Record initialization ADRs from §11.2, including framework, database, identifiers, money, security/session and deployment baseline.
 3. Produce logical and physical database design with tables, keys, indexes, constraints, deletion/retention strategy, transaction/isolation behavior and lifecycle enums.
 4. Produce versioned OpenAPI contracts for public/customer/admin/integration surfaces, including errors, pagination, idempotency and authorization permissions.
@@ -827,11 +831,11 @@ All of the following must be recorded and approved:
 
 ## 19. Phase 1 to Phase 2 Readiness
 
-**Engineering conclusion:** the repository audit and conceptual architecture are complete enough for business/technical approval. The system boundaries, domain ownership, required entities, relationships, invariants, read/write responsibilities, provider boundaries, migration method, no-copy rules, and application prerequisites are no longer conceptually open.
+**Engineering conclusion:** the repository audit and conceptual architecture are complete. The system boundaries, domain ownership, required concepts, relationships, invariants, read/write responsibilities, provider boundaries, migration method, no-copy rules and application prerequisites are conceptually settled.
 
-**Gate conclusion:** the project is **not yet approved to move into Phase 2 schema/API contract freeze**, because the genuine business decisions in §15, production source-data validation, and initialization ADRs in §11.2 have not been approved. It is also not ready to initialize `vastriqo-api` or `vastriqo-admin`.
+**Final gate conclusion:** `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` establishes that **Phase 1 is complete and Phase 2 detailed design may begin**. Production-data validation and genuine business decisions gate only their affected contract/migration/cutover checkpoints; they do not block Phase 2 start.
 
-Once those decisions and validations are recorded, Phase 1 can be marked approved without another repository-wide source audit. Phase 2 should then use this document and the three preceding Phase 1 documents as its input set.
+This does not authorize repository initialization, application code, database migrations or changes to the existing applications.
 
 ## 20. Evidence Reference Index
 
@@ -889,4 +893,3 @@ Once those decisions and validations are recorded, Phase 1 can be marked approve
 - `bms-admin/app/components/inquiry/List.tsx`
 - all three `package.json`, `package-lock.json`, `tsconfig.json`, and Dockerfiles
 - `bms-api/src/config/*`, `src/loaders/express.ts`, `src/lib/api-response.ts`, and `src/lib/pagination.ts`
-

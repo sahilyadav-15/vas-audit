@@ -4,6 +4,8 @@ Audit date: 2026-08-24 (Asia/Kolkata)
 Scope: the complete local `vastriqo` application, with relevant call paths verified in `bms-api`  
 Method: static source trace only; no live Shopify, BMS, database, or deployed-environment access
 
+Status note (2026-08-26): **Audit complete.** The questions in §14 were discovery inputs and have now been reclassified or bounded by `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. This audit remains authoritative for current source behavior, not for the latest phase gate.
+
 ## 1. Executive Summary
 
 ### Status legend
@@ -408,6 +410,8 @@ No item above was deleted or changed.
 
 ## 14. Unresolved Questions
 
+Closure note: these questions are retained as the original audit record. They are not a current questionnaire. The final A–E classification, production-validation checklist, genuine business decisions and Phase 2 readiness are in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md` §§4–23.
+
 1. What product/metaobject identifiers and actual values are configured in production through `SHOPIFY_PRODUCT_METAFIELD_IDENTIFIERS`? `styling_tips` and `about_this_item` cannot be confirmed from committed source.
 2. How many live products, variants, media items, customers, addresses, wishlists, inquiries and orders exist? The source limits may truncate live data.
 3. Which BMS collection records and overrides are actively curated in production, and are any products stale/unpublished/deleted?
@@ -423,6 +427,8 @@ No item above was deleted or changed.
 13. What permanent, explicit integrations—if any—must connect Vastriqo with CCA/BMS after separation?
 
 ## 15. Recommended Next Phase 1 Steps
+
+Historical note: these were the audit's recommended next steps. They were completed through the requirements, product, conceptual-architecture and final closure documents. The current next phase is Phase 2 detailed design; no implementation is authorized by this note.
 
 1. Validate this source-derived matrix with product, operations, support and finance stakeholders; distinguish implemented behavior from policy-page promises.
 2. Export non-mutating inventories/samples from Shopify and BMS to validate field usage, custom metafields/metaobjects, counts, truncation risks and data quality.
@@ -469,4 +475,3 @@ No item above was deleted or changed.
 ### Whole-application coverage check
 
 All page routes under `vastriqo/app` were inventoried, including customer/account routes, aliases/redirects, API route handlers, catalog/product/cart paths, content/legal/help pages, sitemap, global layout, analytics and host proxy. All imports/call sites for Shopify, BMS, fetch, local storage and external URLs were searched outside generated/dependency directories. Important BMS calls were followed through routes/controllers/services and relevant migrations. No live-data conclusions were invented where source could not establish them.
-

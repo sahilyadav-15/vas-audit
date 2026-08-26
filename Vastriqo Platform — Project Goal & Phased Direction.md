@@ -428,7 +428,9 @@ This document describes what exists today and should not be treated as the imple
 
 # Phase 1 — Target Architecture & Requirements
 
-**Next phase**
+**Status: Complete (2026-08-26)**
+
+The completed decision record is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. It preserves the existing storefront as the functional reference, closes the conceptual architecture and permits Phase 2 detailed design without authorizing implementation.
 
 Define exactly what the independent Vastriqo platform must become.
 
@@ -457,6 +459,8 @@ No major implementation should begin until this target architecture is sufficien
 ---
 
 # Phase 2 — Detailed Data & API Design
+
+**Status: Ready to start**
 
 Design the new Vastriqo backend before building the complete application.
 
@@ -692,6 +696,8 @@ and:
 ---
 
 # 12. What This Document Does Not Decide Yet
+
+Status note (2026-08-26): this was the original direction-stage list. Phase 1 has now decided or bounded the conceptual items in `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. Exact physical schema/API/framework/provider/deployment choices remain Phase 2 or later decisions as appropriate; they are no longer Phase 1 blockers.
 
 The following remain deliberately open until the architecture phase:
 
