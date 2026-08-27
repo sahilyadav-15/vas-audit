@@ -1,0 +1,1881 @@
+openapi: 3.1.0
+info:
+  title: Vastriqo Product/Catalog API
+  version: 1.0.0-design
+  description: |
+    Normative Phase 2B Product/Catalog HTTP contract. This is a design artifact,
+    not a deployed API. Examples are synthetic and are not production evidence.
+servers:
+  - url: https://api.vastriqo.in/api/v1
+    description: Illustrative production origin; deployment is not configured by Phase 2B.
+tags:
+  - name: Public Catalog
+  - name: Public Collections
+  - name: Admin Products
+  - name: Admin Collections
+  - name: Admin Media
+  - name: Admin Imports
+  - name: Admin Repair
+
+paths:
+  /catalog/products:
+    get:
+      tags: [Public Catalog]
+      operationId: listPublicProducts
+      summary: List, search, filter, facet, and sort published Products
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/ClassificationFilter'
+        - $ref: '#/components/parameters/SizeFilter'
+        - $ref: '#/components/parameters/ColorFilter'
+        - $ref: '#/components/parameters/AudienceFilter'
+        - $ref: '#/components/parameters/MinPrice'
+        - $ref: '#/components/parameters/MaxPrice'
+        - $ref: '#/components/parameters/Currency'
+        - $ref: '#/components/parameters/AvailabilityFilter'
+        - $ref: '#/components/parameters/ProductSort'
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Complete filtered result page and full-result facets
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductListResponse' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '429': { $ref: '#/components/responses/RateLimitedProblem' }
+
+  /catalog/products/{handle}:
+    get:
+      tags: [Public Catalog]
+      operationId: getPublicProductByHandle
+      summary: Get a complete published Product by canonical handle
+      parameters:
+        - $ref: '#/components/parameters/ProductHandle'
+      responses:
+        '200':
+          description: Complete Product detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '308':
+          description: Handle is an active alias; redirect to canonical API URL
+          headers:
+            Location:
+              required: true
+              schema: { type: string, format: uri }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+        '429': { $ref: '#/components/responses/RateLimitedProblem' }
+
+  /catalog/products/{productId}/related:
+    get:
+      tags: [Public Catalog]
+      operationId: listRelatedProducts
+      summary: List published Products sharing published Collections
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 12, default: 8 }
+      responses:
+        '200':
+          description: Ordered, deduplicated related Products
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductCardPage' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /catalog/collections:
+    get:
+      tags: [Public Collections]
+      operationId: listPublicCollections
+      summary: List published Collection metadata
+      parameters:
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Published Collection page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CollectionPage' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+
+  /catalog/collections/{slug}:
+    get:
+      tags: [Public Collections]
+      operationId: getPublicCollection
+      summary: Get published Collection metadata
+      parameters:
+        - $ref: '#/components/parameters/CollectionSlug'
+      responses:
+        '200':
+          description: Published Collection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Collection' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /catalog/collections/{slug}/products:
+    get:
+      tags: [Public Collections]
+      operationId: listPublicCollectionProducts
+      summary: List ordered published Products in a published Collection
+      parameters:
+        - $ref: '#/components/parameters/CollectionSlug'
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Ordered Product page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductListResponse' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /catalog/sitemap/products:
+    get:
+      tags: [Public Catalog]
+      operationId: listSitemapProducts
+      summary: List published Product sitemap entries or an update delta
+      parameters:
+        - name: updatedAfter
+          in: query
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Sitemap Product page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SitemapProductPage' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+
+  /admin/products:
+    get:
+      tags: [Admin Products]
+      operationId: listAdminProducts
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+        - name: publicationStatus
+          in: query
+          schema: { $ref: '#/components/schemas/ProductPublicationStatus' }
+        - $ref: '#/components/parameters/ClassificationFilter'
+        - $ref: '#/components/parameters/AvailabilityFilter'
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Admin Product page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminProductPage' }
+        '400': { $ref: '#/components/responses/BadRequestProblem' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+    post:
+      tags: [Admin Products]
+      operationId: createAdminProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateProductCommand' }
+      responses:
+        '201':
+          $ref: '#/components/responses/AdminProductCreated'
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+
+  /admin/products/{productId}:
+    get:
+      tags: [Admin Products]
+      operationId: getAdminProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters: [{ $ref: '#/components/parameters/ProductId' }]
+      responses:
+        '200': { $ref: '#/components/responses/AdminProductOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/products/{productId}/preview:
+    get:
+      tags: [Admin Products]
+      operationId: previewAdminProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters: [{ $ref: '#/components/parameters/ProductId' }]
+      responses:
+        '200':
+          description: Non-public preview and validation state
+          headers:
+            ETag: { required: true, schema: { type: string, pattern: '^"[0-9]+"$' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductPreview' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/products/{productId}/content:
+    patch:
+      tags: [Admin Products]
+      operationId: updateProductContent
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProductContentCommand' }
+      responses:
+        '200': { $ref: '#/components/responses/AdminProductOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/products/{productId}/handle-changes:
+    post:
+      tags: [Admin Products]
+      operationId: changeProductHandle
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangeHandleCommand' }
+      responses:
+        '200': { $ref: '#/components/responses/AdminProductOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/products/{productId}/options:
+    put:
+      tags: [Admin Products]
+      operationId: replaceProductOptions
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReplaceOptionsCommand' }
+      responses:
+        '200': { $ref: '#/components/responses/AdminProductOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/products/{productId}/variants:
+    post:
+      tags: [Admin Products]
+      operationId: createProductVariant
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateVariantCommand' }
+      responses:
+        '201': { $ref: '#/components/responses/AdminProductCreated' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/products/{productId}/variants/{variantId}:
+    patch:
+      tags: [Admin Products]
+      operationId: updateProductVariant
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/VariantId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateVariantCommand' }
+      responses:
+        '200': { $ref: '#/components/responses/AdminProductOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/products/{productId}/variants/order:
+    put:
+      tags: [Admin Products]
+      operationId: reorderProductVariants
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReorderIdsCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/variants/{variantId}/selections:
+    put:
+      tags: [Admin Products]
+      operationId: replaceVariantSelections
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/VariantId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReplaceSelectionsCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/variants/{variantId}/price:
+    put:
+      tags: [Admin Products]
+      operationId: updateVariantPrice
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/VariantId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePriceCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/variants/{variantId}/inventory-policy:
+    put:
+      tags: [Admin Products]
+      operationId: updateVariantInventoryPolicy
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/VariantId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateInventoryPolicyCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/variants/{variantId}/retirement:
+    post:
+      tags: [Admin Products]
+      operationId: retireProductVariant
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/VariantId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/ReasonCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/media:
+    post:
+      tags: [Admin Media]
+      operationId: attachProductMedia
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttachMediaCommand' }
+      responses: { '201': { $ref: '#/components/responses/AdminProductCreated' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/media/order:
+    put:
+      tags: [Admin Media]
+      operationId: reorderProductMedia
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [mediaIds]
+              properties:
+                mediaIds: { type: array, minItems: 1, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/media/{mediaId}/featured:
+    put:
+      tags: [Admin Media]
+      operationId: featureProductMedia
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/MediaId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/card-media:
+    put:
+      tags: [Admin Media]
+      operationId: setProductCardMedia
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [mediaId]
+              properties:
+                mediaId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/media/{mediaId}/retirement:
+    post:
+      tags: [Admin Media]
+      operationId: retireProductMedia
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/MediaId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/ReasonCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/specifications:
+    put:
+      tags: [Admin Products]
+      operationId: replaceProductSpecifications
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReplaceSpecificationsCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/publication-validations:
+    post:
+      tags: [Admin Products]
+      operationId: validateProductPublication
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters: [{ $ref: '#/components/parameters/ProductId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '200':
+          description: Complete publication blockers and warnings; no state change
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicationValidation' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/products/{productId}/publish:
+    post:
+      tags: [Admin Products]
+      operationId: publishProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/EmptyCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/unpublish:
+    post:
+      tags: [Admin Products]
+      operationId: unpublishProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/ReasonCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/retirement:
+    post:
+      tags: [Admin Products]
+      operationId: retireProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/ReasonCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/restore:
+    post:
+      tags: [Admin Products]
+      operationId: restoreProductToDraft
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/EmptyCommand' }
+      responses: { '200': { $ref: '#/components/responses/AdminProductOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/products/{productId}/projection-rebuilds:
+    post:
+      tags: [Admin Repair]
+      operationId: requestProductProjectionRebuild
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:repair]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/EmptyCommand' }
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '412': { $ref: '#/components/responses/StaleVersionProblem' }
+        '428': { $ref: '#/components/responses/PreconditionRequiredProblem' }
+
+  /admin/collections:
+    get:
+      tags: [Admin Collections]
+      operationId: listAdminCollections
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Admin Collection page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminCollectionPage' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+
+  /admin/collections/{collectionId}:
+    get:
+      tags: [Admin Collections]
+      operationId: getAdminCollection
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:read]
+      parameters: [{ $ref: '#/components/parameters/CollectionId' }]
+      responses:
+        '200': { $ref: '#/components/responses/AdminCollectionOk' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/collections/{collectionId}/memberships:
+    post:
+      tags: [Admin Collections]
+      operationId: assignCollectionProducts
+      security: [{ AdminSession: [] }]
+      x-permissions: [merchandising:write]
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [productIds]
+              properties:
+                productIds: { type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/AdminCollectionOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/collections/{collectionId}/memberships/{productId}:
+    delete:
+      tags: [Admin Collections]
+      operationId: removeCollectionProduct
+      security: [{ AdminSession: [] }]
+      x-permissions: [merchandising:write]
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses: { '200': { $ref: '#/components/responses/AdminCollectionOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '404': { $ref: '#/components/responses/NotFoundProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/collections/{collectionId}/memberships/order:
+    put:
+      tags: [Admin Collections]
+      operationId: reorderCollectionProducts
+      security: [{ AdminSession: [] }]
+      x-permissions: [merchandising:write]
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [productIds]
+              properties:
+                productIds: { type: array, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
+      responses: { '200': { $ref: '#/components/responses/AdminCollectionOk' }, '401': { $ref: '#/components/responses/UnauthorizedProblem' }, '403': { $ref: '#/components/responses/ForbiddenProblem' }, '409': { $ref: '#/components/responses/ConflictProblem' }, '412': { $ref: '#/components/responses/StaleVersionProblem' }, '422': { $ref: '#/components/responses/ValidationProblem' }, '428': { $ref: '#/components/responses/PreconditionRequiredProblem' } }
+
+  /admin/media/uploads:
+    post:
+      tags: [Admin Media]
+      operationId: createMediaUpload
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMediaUploadCommand' }
+      responses:
+        '201':
+          description: Upload intent created
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaUploadIntent' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+
+  /admin/media/uploads/{uploadId}/complete:
+    post:
+      tags: [Admin Media]
+      operationId: completeMediaUpload
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:media]
+      parameters:
+        - $ref: '#/components/parameters/UploadId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/EmptyCommand' }
+      responses:
+        '200':
+          description: Native asset verified and ready to attach
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompletedMediaUpload' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        '502': { $ref: '#/components/responses/DependencyProblem' }
+        '503': { $ref: '#/components/responses/DependencyProblem' }
+
+  /admin/import-runs:
+    get:
+      tags: [Admin Imports]
+      operationId: listImportRuns
+      security: [{ AdminSession: [] }]
+      x-permissions: [migration:read]
+      parameters:
+        - name: sourceSystem
+          in: query
+          schema: { $ref: '#/components/schemas/SourceSystem' }
+        - name: mode
+          in: query
+          schema: { $ref: '#/components/schemas/ImportMode' }
+        - name: state
+          in: query
+          schema: { $ref: '#/components/schemas/ImportRunState' }
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Import run page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRunPage' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+    post:
+      tags: [Admin Imports]
+      operationId: createImportRun
+      security: [{ AdminSession: [] }]
+      x-permissions: [migration:run]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateImportRunCommand' }
+      responses:
+        '202':
+          description: Import run accepted
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRun' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+
+  /admin/import-runs/{runId}:
+    get:
+      tags: [Admin Imports]
+      operationId: getImportRun
+      security: [{ AdminSession: [] }]
+      x-permissions: [migration:read]
+      parameters: [{ $ref: '#/components/parameters/RunId' }]
+      responses:
+        '200':
+          description: Import run
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRun' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/import-runs/{runId}/records:
+    get:
+      tags: [Admin Imports]
+      operationId: listImportRecords
+      security: [{ AdminSession: [] }]
+      x-permissions: [migration:read]
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - name: action
+          in: query
+          schema: { $ref: '#/components/schemas/ImportAction' }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ImportRecordStatus' }
+        - $ref: '#/components/parameters/PublicLimit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Import record page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRecordPage' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+
+  /admin/import-runs/{runId}/cancellation:
+    post:
+      tags: [Admin Imports]
+      operationId: cancelImportRun
+      security: [{ AdminSession: [] }]
+      x-permissions: [migration:run]
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody: { $ref: '#/components/requestBodies/ReasonCommand' }
+      responses:
+        '202':
+          description: Cooperative cancellation accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRun' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '404': { $ref: '#/components/responses/NotFoundProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+
+  /admin/catalog/projection-rebuilds:
+    post:
+      tags: [Admin Repair]
+      operationId: requestCatalogProjectionRebuild
+      security: [{ AdminSession: [] }]
+      x-permissions: [catalog:repair]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectionRebuildCommand' }
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        '401': { $ref: '#/components/responses/UnauthorizedProblem' }
+        '403': { $ref: '#/components/responses/ForbiddenProblem' }
+        '409': { $ref: '#/components/responses/ConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+
+components:
+  securitySchemes:
+    AdminSession:
+      type: http
+      scheme: bearer
+      bearerFormat: OpaqueAdminSession
+      description: Server-to-server opaque admin session supplied by the same-origin admin BFF.
+
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    VariantId:
+      name: variantId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    CollectionId:
+      name: collectionId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    MediaId:
+      name: mediaId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    UploadId:
+      name: uploadId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Uuid' }
+    ProductHandle:
+      name: handle
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Handle' }
+    CollectionSlug:
+      name: slug
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Handle' }
+    SearchQuery:
+      name: q
+      in: query
+      schema: { type: string, maxLength: 200 }
+    ClassificationFilter:
+      name: classification
+      in: query
+      style: form
+      explode: true
+      schema: { type: array, items: { type: string, pattern: '^[a-z0-9]+(?:_[a-z0-9]+)*$' } }
+    SizeFilter:
+      name: size
+      in: query
+      style: form
+      explode: true
+      schema: { type: array, items: { type: string, minLength: 1, maxLength: 160 } }
+    ColorFilter:
+      name: color
+      in: query
+      style: form
+      explode: true
+      schema: { type: array, items: { type: string, minLength: 1, maxLength: 160 } }
+    AudienceFilter:
+      name: audience
+      in: query
+      style: form
+      explode: true
+      schema: { type: array, items: { type: string, minLength: 1, maxLength: 100 } }
+    MinPrice:
+      name: minPrice
+      in: query
+      schema: { $ref: '#/components/schemas/DecimalAmount' }
+    MaxPrice:
+      name: maxPrice
+      in: query
+      schema: { $ref: '#/components/schemas/DecimalAmount' }
+    Currency:
+      name: currency
+      in: query
+      schema: { $ref: '#/components/schemas/CurrencyCode' }
+    AvailabilityFilter:
+      name: availability
+      in: query
+      schema: { type: string, enum: [all, available, sold_out], default: all }
+    ProductSort:
+      name: sort
+      in: query
+      schema: { type: string, enum: [recommended, newest, price_asc, price_desc] }
+    PublicLimit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string, minLength: 1, maxLength: 2048 }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Strong quoted decimal aggregate version, for example `"12"`.
+      schema: { type: string, pattern: '^"[0-9]+"$' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+
+  requestBodies:
+    EmptyCommand:
+      required: true
+      content:
+        application/json:
+          schema: { type: object, additionalProperties: false }
+    ReasonCommand:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [reason]
+            properties:
+              reason: { type: string, minLength: 1, maxLength: 500 }
+
+  responses:
+    AdminProductOk:
+      description: Updated/current admin Product
+      headers:
+        ETag: { required: true, schema: { type: string, pattern: '^"[0-9]+"$' } }
+        X-Correlation-ID: { schema: { type: string } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AdminProduct' }
+    AdminProductCreated:
+      description: Product or Product-owned resource created
+      headers:
+        ETag: { required: true, schema: { type: string, pattern: '^"[0-9]+"$' } }
+        Location: { required: true, schema: { type: string, format: uri-reference } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AdminProduct' }
+    AdminCollectionOk:
+      description: Current/updated admin Collection
+      headers:
+        ETag: { required: true, schema: { type: string, pattern: '^"[0-9]+"$' } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AdminCollection' }
+    OperationAccepted:
+      description: Asynchronous operation accepted
+      headers:
+        Location: { required: true, schema: { type: string, format: uri-reference } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Operation' }
+    BadRequestProblem:
+      description: Malformed request or invalid cursor
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationProblem:
+      description: Field or aggregate validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFoundProblem:
+      description: Requested visible/authorized resource was not found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ConflictProblem:
+      description: Unique, lifecycle, idempotency, mapping, or aggregate conflict
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    StaleVersionProblem:
+      description: If-Match version is stale
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/StaleVersionProblem' }
+    PreconditionRequiredProblem:
+      description: Required If-Match header is missing
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    UnauthorizedProblem:
+      description: Admin session is absent or invalid
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ForbiddenProblem:
+      description: Admin lacks the operation permission
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    RateLimitedProblem:
+      description: Rate limit exceeded
+      headers:
+        Retry-After: { schema: { type: integer, minimum: 1 } }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    DependencyProblem:
+      description: A transient external dependency operation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    Version:
+      type: string
+      pattern: '^[0-9]+$'
+      examples: ['12']
+    Handle:
+      type: string
+      minLength: 1
+      maxLength: 160
+      pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+    DecimalAmount:
+      type: string
+      pattern: '^(0|[1-9][0-9]*)(\.[0-9]+)?$'
+      examples: ['1299.00']
+    CurrencyCode:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      examples: [INR]
+    Money:
+      type: object
+      additionalProperties: false
+      required: [amount, currency]
+      properties:
+        amount: { $ref: '#/components/schemas/DecimalAmount' }
+        currency: { $ref: '#/components/schemas/CurrencyCode' }
+    Availability:
+      type: string
+      enum: [available, sold_out]
+    ProductPublicationStatus:
+      type: string
+      enum: [draft, published, retired]
+    VariantStatus:
+      type: string
+      enum: [active, retired]
+    InventoryMode:
+      type: string
+      enum: [tracked, not_tracked]
+    OversellPolicy:
+      type: string
+      enum: [deny, continue]
+    ClassificationSummary:
+      type: object
+      additionalProperties: false
+      required: [id, code, name]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        code: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+    PublicMedia:
+      type: object
+      additionalProperties: false
+      required: [id, url, altText, role, position, featured]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        url: { type: string, format: uri, pattern: '^https://' }
+        altText: { type: string, minLength: 1, maxLength: 500 }
+        role: { type: string, enum: [gallery, card_override] }
+        position: { type: integer, minimum: 0 }
+        featured: { type: boolean }
+    OptionValue:
+      type: object
+      additionalProperties: false
+      required: [id, value, position]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        value: { type: string, minLength: 1, maxLength: 160 }
+        position: { type: integer, minimum: 0 }
+    ProductOption:
+      type: object
+      additionalProperties: false
+      required: [id, code, name, position, values]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        code: { type: string, minLength: 1, maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        position: { type: integer, minimum: 0 }
+        values:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/OptionValue' }
+    VariantSelection:
+      type: object
+      additionalProperties: false
+      required: [optionId, optionValueId, optionCode, optionName, value]
+      properties:
+        optionId: { $ref: '#/components/schemas/Uuid' }
+        optionValueId: { $ref: '#/components/schemas/Uuid' }
+        optionCode: { type: string }
+        optionName: { type: string }
+        value: { type: string }
+    ProductVariant:
+      type: object
+      additionalProperties: false
+      required: [id, title, position, selections, price, availability]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        title: { type: [string, 'null'], maxLength: 240 }
+        position: { type: integer, minimum: 0 }
+        selections: { type: array, items: { $ref: '#/components/schemas/VariantSelection' } }
+        price:
+          description: This Variant's price.
+          $ref: '#/components/schemas/Money'
+        availability: { $ref: '#/components/schemas/Availability' }
+    SpecificationValue:
+      type: object
+      additionalProperties: false
+      required: [value, position]
+      properties:
+        value: { type: string, minLength: 1 }
+        position: { type: integer, minimum: 0 }
+    ProductSpecification:
+      type: object
+      additionalProperties: false
+      required: [code, label, position, values]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 80 }
+        label: { type: string, minLength: 1, maxLength: 160 }
+        position: { type: integer, minimum: 0 }
+        values: { type: array, minItems: 1, items: { $ref: '#/components/schemas/SpecificationValue' } }
+    OptionSummary:
+      type: object
+      additionalProperties: false
+      required: [code, name, values]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        values: { type: array, items: { type: string } }
+    ProductCard:
+      type: object
+      additionalProperties: false
+      required: [id, handle, title, cardMedia, price, classification, optionSummaries, availability]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        handle: { $ref: '#/components/schemas/Handle' }
+        title: { type: string, minLength: 1, maxLength: 240 }
+        cardMedia: { anyOf: [{ $ref: '#/components/schemas/PublicMedia' }, { type: 'null' }] }
+        price:
+          description: Minimum price among eligible active Variants.
+          $ref: '#/components/schemas/Money'
+        classification: { anyOf: [{ $ref: '#/components/schemas/ClassificationSummary' }, { type: 'null' }] }
+        optionSummaries: { type: array, items: { $ref: '#/components/schemas/OptionSummary' } }
+        availability: { $ref: '#/components/schemas/Availability' }
+    SeoProjection:
+      type: object
+      additionalProperties: false
+      required: [title, description, image]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        image: { anyOf: [{ $ref: '#/components/schemas/PublicMedia' }, { type: 'null' }] }
+    ProductDetail:
+      type: object
+      additionalProperties: false
+      required: [id, handle, title, descriptionText, descriptionHtml, classification, media, options, variants, specifications, price, availability, seo, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        handle: { $ref: '#/components/schemas/Handle' }
+        title: { type: string, minLength: 1, maxLength: 240 }
+        descriptionText: { type: [string, 'null'] }
+        descriptionHtml: { type: [string, 'null'] }
+        classification: { anyOf: [{ $ref: '#/components/schemas/ClassificationSummary' }, { type: 'null' }] }
+        media: { type: array, items: { $ref: '#/components/schemas/PublicMedia' } }
+        options: { type: array, items: { $ref: '#/components/schemas/ProductOption' } }
+        variants: { type: array, minItems: 1, items: { $ref: '#/components/schemas/ProductVariant' } }
+        specifications: { type: array, items: { $ref: '#/components/schemas/ProductSpecification' } }
+        price:
+          description: Minimum price among eligible active Variants.
+          $ref: '#/components/schemas/Money'
+        availability: { $ref: '#/components/schemas/Availability' }
+        seo: { $ref: '#/components/schemas/SeoProjection' }
+        updatedAt: { type: string, format: date-time }
+    PageInfo:
+      type: object
+      additionalProperties: false
+      required: [hasNextPage, nextCursor]
+      properties:
+        hasNextPage: { type: boolean }
+        nextCursor: { type: [string, 'null'] }
+    FacetTerm:
+      type: object
+      additionalProperties: false
+      required: [value, label, count, selected]
+      properties:
+        value: { type: string }
+        label: { type: string }
+        count: { type: integer, minimum: 0 }
+        selected: { type: boolean }
+    MoneyRange:
+      type: object
+      additionalProperties: false
+      required: [minimum, maximum]
+      properties:
+        minimum: { $ref: '#/components/schemas/Money' }
+        maximum: { $ref: '#/components/schemas/Money' }
+    Facet:
+      type: object
+      additionalProperties: false
+      required: [code, label, kind, values, range]
+      properties:
+        code: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [terms, range] }
+        values: { type: array, items: { $ref: '#/components/schemas/FacetTerm' } }
+        range: { anyOf: [{ $ref: '#/components/schemas/MoneyRange' }, { type: 'null' }] }
+    ProductListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, totalCount, facets, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ProductCard' } }
+        totalCount: { type: integer, minimum: 0 }
+        facets: { type: array, items: { $ref: '#/components/schemas/Facet' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    ProductCardPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ProductCard' } }
+    Collection:
+      type: object
+      additionalProperties: false
+      required: [id, slug, title, description, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        slug: { $ref: '#/components/schemas/Handle' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'] }
+        updatedAt: { type: string, format: date-time }
+    CollectionPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Collection' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    SitemapProduct:
+      type: object
+      additionalProperties: false
+      required: [handle, title, updatedAt]
+      properties:
+        handle: { $ref: '#/components/schemas/Handle' }
+        title: { type: string }
+        updatedAt: { type: string, format: date-time }
+    SitemapProductPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SitemapProduct' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    ValidationIssue:
+      type: object
+      additionalProperties: false
+      required: [code, path, message]
+      properties:
+        code: { type: string, pattern: '^[A-Z0-9_]+$' }
+        path: { type: string }
+        message: { type: string }
+    PublicationValidation:
+      type: object
+      additionalProperties: false
+      required: [eligible, blockers, warnings]
+      properties:
+        eligible: { type: boolean }
+        blockers: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+        warnings: { type: array, items: { $ref: '#/components/schemas/ValidationIssue' } }
+    ProductPreview:
+      type: object
+      additionalProperties: false
+      required: [version, product, validation]
+      properties:
+        version: { $ref: '#/components/schemas/Version' }
+        product: { anyOf: [{ $ref: '#/components/schemas/ProductDetail' }, { type: 'null' }] }
+        validation: { $ref: '#/components/schemas/PublicationValidation' }
+    HandleRecord:
+      type: object
+      additionalProperties: false
+      required: [handle, canonical, retiredAt]
+      properties:
+        handle: { $ref: '#/components/schemas/Handle' }
+        canonical: { type: boolean }
+        retiredAt: { type: [string, 'null'], format: date-time }
+    AdminVariant:
+      type: object
+      additionalProperties: false
+      required: [id, title, position, selections, price, availability, sku, status, inventoryMode, oversellPolicy]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        title: { type: [string, 'null'], maxLength: 240 }
+        position: { type: integer, minimum: 0 }
+        selections: { type: array, items: { $ref: '#/components/schemas/VariantSelection' } }
+        price: { $ref: '#/components/schemas/Money' }
+        availability: { $ref: '#/components/schemas/Availability' }
+        sku: { type: [string, 'null'], maxLength: 120 }
+        status: { $ref: '#/components/schemas/VariantStatus' }
+        inventoryMode: { $ref: '#/components/schemas/InventoryMode' }
+        oversellPolicy: { $ref: '#/components/schemas/OversellPolicy' }
+    AdminMedia:
+      type: object
+      additionalProperties: false
+      required: [id, url, altText, role, position, featured, status, retiredAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        url: { type: string, format: uri, pattern: '^https://' }
+        altText: { type: string, minLength: 1, maxLength: 500 }
+        role: { type: string, enum: [gallery, card_override] }
+        position: { type: integer, minimum: 0 }
+        featured: { type: boolean }
+        status: { type: string, enum: [active, retired] }
+        retiredAt: { type: [string, 'null'], format: date-time }
+    AdminProductSummary:
+      type: object
+      additionalProperties: false
+      required: [id, handle, title, cardMedia, price, classification, publicationStatus, availability, updatedAt, version, importHealth]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        handle: { $ref: '#/components/schemas/Handle' }
+        title: { type: string }
+        cardMedia: { anyOf: [{ $ref: '#/components/schemas/PublicMedia' }, { type: 'null' }] }
+        price: { anyOf: [{ $ref: '#/components/schemas/Money' }, { type: 'null' }] }
+        classification: { anyOf: [{ $ref: '#/components/schemas/ClassificationSummary' }, { type: 'null' }] }
+        publicationStatus: { $ref: '#/components/schemas/ProductPublicationStatus' }
+        availability: { $ref: '#/components/schemas/Availability' }
+        updatedAt: { type: string, format: date-time }
+        version: { $ref: '#/components/schemas/Version' }
+        importHealth: { type: [string, 'null'], enum: [healthy, warning, conflict, null] }
+    AdminProductPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminProductSummary' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    SearchTerm:
+      type: object
+      additionalProperties: false
+      required: [term, position]
+      properties:
+        term: { type: string, minLength: 1, maxLength: 160 }
+        position: { type: integer, minimum: 0 }
+    AdminProduct:
+      type: object
+      additionalProperties: false
+      required: [id, version, title, descriptionText, descriptionHtml, classification, publicationStatus, publishedAt, retiredAt, merchandisingAt, handles, searchTerms, options, variants, media, specifications, collections, inventory, provenance, availability, publicationValidation, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        version: { $ref: '#/components/schemas/Version' }
+        title: { type: string }
+        descriptionText: { type: [string, 'null'] }
+        descriptionHtml: { type: [string, 'null'] }
+        classification: { anyOf: [{ $ref: '#/components/schemas/ClassificationSummary' }, { type: 'null' }] }
+        publicationStatus: { $ref: '#/components/schemas/ProductPublicationStatus' }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        retiredAt: { type: [string, 'null'], format: date-time }
+        merchandisingAt: { type: [string, 'null'], format: date-time }
+        handles: { type: array, minItems: 1, items: { $ref: '#/components/schemas/HandleRecord' } }
+        searchTerms: { type: array, items: { $ref: '#/components/schemas/SearchTerm' } }
+        options: { type: array, items: { $ref: '#/components/schemas/ProductOption' } }
+        variants: { type: array, items: { $ref: '#/components/schemas/AdminVariant' } }
+        media: { type: array, items: { $ref: '#/components/schemas/AdminMedia' } }
+        specifications: { type: array, items: { $ref: '#/components/schemas/ProductSpecification' } }
+        collections: { type: array, items: { $ref: '#/components/schemas/Collection' } }
+        inventory: { $ref: '#/components/schemas/AdminInventorySummary' }
+        provenance: { anyOf: [{ $ref: '#/components/schemas/ImportProvenance' }, { type: 'null' }] }
+        availability: { $ref: '#/components/schemas/Availability' }
+        publicationValidation: { $ref: '#/components/schemas/PublicationValidation' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    Quantity:
+      type: string
+      pattern: '^-?[0-9]+$'
+    AdminInventoryPosition:
+      type: object
+      additionalProperties: false
+      required: [variantId, locationId, locationCode, locationName, onHand, reserved, availableToSell, updatedAt]
+      properties:
+        variantId: { $ref: '#/components/schemas/Uuid' }
+        locationId: { $ref: '#/components/schemas/Uuid' }
+        locationCode: { type: string }
+        locationName: { type: string }
+        onHand: { $ref: '#/components/schemas/Quantity' }
+        reserved: { $ref: '#/components/schemas/Quantity' }
+        availableToSell: { $ref: '#/components/schemas/Quantity' }
+        updatedAt: { type: string, format: date-time }
+    AdminInventorySummary:
+      type: object
+      additionalProperties: false
+      required: [availability, positions]
+      properties:
+        availability: { $ref: '#/components/schemas/Availability' }
+        positions: { type: array, items: { $ref: '#/components/schemas/AdminInventoryPosition' } }
+    SourceMappingSummary:
+      type: object
+      additionalProperties: false
+      required: [sourceSystem, sourceEntityType, externalId, mappingState, sourceVersion, lastImportRunId]
+      properties:
+        sourceSystem: { $ref: '#/components/schemas/SourceSystem' }
+        sourceEntityType: { type: string }
+        externalId: { type: string }
+        mappingState: { type: string, enum: [active, conflicted, retired] }
+        sourceVersion: { type: [string, 'null'] }
+        lastImportRunId: { $ref: '#/components/schemas/Uuid' }
+    ImportProvenance:
+      type: object
+      additionalProperties: false
+      required: [mappings, latestAction, latestStatus, conflictingGroups]
+      properties:
+        mappings: { type: array, items: { $ref: '#/components/schemas/SourceMappingSummary' } }
+        latestAction: { anyOf: [{ $ref: '#/components/schemas/ImportAction' }, { type: 'null' }] }
+        latestStatus: { anyOf: [{ $ref: '#/components/schemas/ImportRecordStatus' }, { type: 'null' }] }
+        conflictingGroups: { type: array, items: { type: string } }
+    CreateProductCommand:
+      type: object
+      additionalProperties: false
+      required: [title, handle, searchTerms]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 240 }
+        handle: { $ref: '#/components/schemas/Handle' }
+        descriptionText: { type: [string, 'null'] }
+        descriptionHtml: { type: [string, 'null'] }
+        classificationId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        searchTerms: { type: array, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 160 } }
+    UpdateProductContentCommand:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 240 }
+        descriptionText: { type: [string, 'null'] }
+        descriptionHtml: { type: [string, 'null'] }
+        classificationId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        searchTerms: { type: array, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 160 } }
+    ChangeHandleCommand:
+      type: object
+      additionalProperties: false
+      required: [handle]
+      properties:
+        handle: { $ref: '#/components/schemas/Handle' }
+    OptionValueInput:
+      type: object
+      additionalProperties: false
+      required: [value, position]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        value: { type: string, minLength: 1, maxLength: 160 }
+        position: { type: integer, minimum: 0 }
+    ProductOptionInput:
+      type: object
+      additionalProperties: false
+      required: [code, name, position, values]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        code: { type: string, pattern: '^[a-z0-9]+(?:_[a-z0-9]+)*$', maxLength: 64 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        position: { type: integer, minimum: 0 }
+        values: { type: array, minItems: 1, items: { $ref: '#/components/schemas/OptionValueInput' } }
+    ReplaceOptionsCommand:
+      type: object
+      additionalProperties: false
+      required: [options]
+      properties:
+        options: { type: array, items: { $ref: '#/components/schemas/ProductOptionInput' } }
+    VariantSelectionInput:
+      type: object
+      additionalProperties: false
+      required: [optionId, optionValueId]
+      properties:
+        optionId: { $ref: '#/components/schemas/Uuid' }
+        optionValueId: { $ref: '#/components/schemas/Uuid' }
+    CreateVariantCommand:
+      type: object
+      additionalProperties: false
+      required: [position, selections, price, inventoryMode, oversellPolicy]
+      properties:
+        title: { type: [string, 'null'], maxLength: 240 }
+        sku: { type: [string, 'null'], maxLength: 120 }
+        position: { type: integer, minimum: 0 }
+        selections: { type: array, uniqueItems: true, items: { $ref: '#/components/schemas/VariantSelectionInput' } }
+        price: { $ref: '#/components/schemas/Money' }
+        inventoryMode: { $ref: '#/components/schemas/InventoryMode' }
+        oversellPolicy: { $ref: '#/components/schemas/OversellPolicy' }
+    UpdateVariantCommand:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: [string, 'null'], maxLength: 240 }
+        sku: { type: [string, 'null'], maxLength: 120 }
+        position: { type: integer, minimum: 0 }
+    ReorderIdsCommand:
+      type: object
+      additionalProperties: false
+      required: [variantIds]
+      properties:
+        variantIds: { type: array, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
+    ReplaceSelectionsCommand:
+      type: object
+      additionalProperties: false
+      required: [selections]
+      properties:
+        selections: { type: array, uniqueItems: true, items: { $ref: '#/components/schemas/VariantSelectionInput' } }
+    UpdatePriceCommand:
+      type: object
+      additionalProperties: false
+      required: [price]
+      properties:
+        price: { $ref: '#/components/schemas/Money' }
+    UpdateInventoryPolicyCommand:
+      type: object
+      additionalProperties: false
+      required: [inventoryMode, oversellPolicy]
+      properties:
+        inventoryMode: { $ref: '#/components/schemas/InventoryMode' }
+        oversellPolicy: { $ref: '#/components/schemas/OversellPolicy' }
+    AttachMediaCommand:
+      type: object
+      additionalProperties: false
+      required: [uploadId, altText, usage, position, featured]
+      properties:
+        uploadId: { $ref: '#/components/schemas/Uuid' }
+        altText: { type: [string, 'null'], maxLength: 500 }
+        usage: { type: string, enum: [gallery, card_override] }
+        position: { type: [integer, 'null'], minimum: 0 }
+        featured: { type: boolean }
+    SpecificationValueInput:
+      type: object
+      additionalProperties: false
+      required: [allowedValueId, textValue, position]
+      oneOf:
+        - properties:
+            allowedValueId: { $ref: '#/components/schemas/Uuid' }
+            textValue: { type: 'null' }
+        - properties:
+            allowedValueId: { type: 'null' }
+            textValue: { type: string, minLength: 1 }
+      properties:
+        allowedValueId: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }
+        textValue: { type: [string, 'null'] }
+        position: { type: integer, minimum: 0 }
+    SpecificationInput:
+      type: object
+      additionalProperties: false
+      required: [definitionId, values]
+      properties:
+        definitionId: { $ref: '#/components/schemas/Uuid' }
+        values: { type: array, minItems: 1, items: { $ref: '#/components/schemas/SpecificationValueInput' } }
+    ReplaceSpecificationsCommand:
+      type: object
+      additionalProperties: false
+      required: [specifications]
+      properties:
+        specifications: { type: array, items: { $ref: '#/components/schemas/SpecificationInput' } }
+    CollectionMembership:
+      type: object
+      additionalProperties: false
+      required: [product, position]
+      properties:
+        product: { $ref: '#/components/schemas/AdminProductSummary' }
+        position: { type: integer, minimum: 0 }
+    AdminCollection:
+      type: object
+      additionalProperties: false
+      required: [id, version, slug, title, description, publicationStatus, memberships, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        version: { $ref: '#/components/schemas/Version' }
+        slug: { $ref: '#/components/schemas/Handle' }
+        title: { type: string }
+        description: { type: [string, 'null'] }
+        publicationStatus: { $ref: '#/components/schemas/ProductPublicationStatus' }
+        memberships: { type: array, items: { $ref: '#/components/schemas/CollectionMembership' } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AdminCollectionPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/AdminCollection' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    CreateMediaUploadCommand:
+      type: object
+      additionalProperties: false
+      required: [fileName, contentType, contentLength, sha256]
+      properties:
+        fileName: { type: string, minLength: 1, maxLength: 255 }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+        contentLength: { type: integer, minimum: 1, maximum: 20971520 }
+        sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+    UploadInstruction:
+      type: object
+      additionalProperties: false
+      required: [url, method, headers]
+      properties:
+        url: { type: string, format: uri, pattern: '^https://' }
+        method: { type: string, enum: [PUT, POST] }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+    MediaUploadIntent:
+      type: object
+      additionalProperties: false
+      required: [uploadId, state, expiresAt, upload]
+      properties:
+        uploadId: { $ref: '#/components/schemas/Uuid' }
+        state: { type: string, enum: [pending_upload] }
+        expiresAt: { type: string, format: date-time }
+        upload: { $ref: '#/components/schemas/UploadInstruction' }
+    CompletedMediaUpload:
+      type: object
+      additionalProperties: false
+      required: [uploadId, state, width, height]
+      properties:
+        uploadId: { $ref: '#/components/schemas/Uuid' }
+        state: { type: string, enum: [completed] }
+        width: { type: integer, minimum: 1, maximum: 20000 }
+        height: { type: integer, minimum: 1, maximum: 20000 }
+    SourceSystem:
+      type: string
+      enum: [shopify, bms, approved_file]
+    ImportMode:
+      type: string
+      enum: [dry_run, apply, delta, reconcile]
+    ImportRunState:
+      type: string
+      enum: [pending, running, succeeded, failed, cancelled]
+    ImportAction:
+      type: string
+      enum: [create, update, unchanged, exclude, conflict, error]
+    ImportRecordStatus:
+      type: string
+      enum: [pending, succeeded, warning, failed]
+    ImportSelection:
+      type: object
+      additionalProperties: false
+      required: [watermark, externalIds]
+      properties:
+        watermark: { type: [string, 'null'], maxLength: 500 }
+        externalIds: { type: array, maxItems: 1000, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 500 } }
+    CreateImportRunCommand:
+      type: object
+      additionalProperties: false
+      required: [sourceSystem, scope, mode, mappingVersion, selection]
+      properties:
+        sourceSystem: { $ref: '#/components/schemas/SourceSystem' }
+        scope: { type: string, const: product_catalog }
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        mappingVersion: { type: string, minLength: 1, maxLength: 80 }
+        selection: { $ref: '#/components/schemas/ImportSelection' }
+    ImportRunSummary:
+      type: object
+      additionalProperties: false
+      required: [total, create, update, unchanged, exclude, conflict, error]
+      properties:
+        total: { type: integer, minimum: 0 }
+        create: { type: integer, minimum: 0 }
+        update: { type: integer, minimum: 0 }
+        unchanged: { type: integer, minimum: 0 }
+        exclude: { type: integer, minimum: 0 }
+        conflict: { type: integer, minimum: 0 }
+        error: { type: integer, minimum: 0 }
+    ImportRun:
+      type: object
+      additionalProperties: false
+      required: [id, sourceSystem, scope, mode, state, mappingVersion, manifestHash, startedAt, completedAt, summary, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        sourceSystem: { $ref: '#/components/schemas/SourceSystem' }
+        scope: { type: string, const: product_catalog }
+        mode: { $ref: '#/components/schemas/ImportMode' }
+        state: { $ref: '#/components/schemas/ImportRunState' }
+        mappingVersion: { type: string }
+        manifestHash: { type: string, pattern: '^[a-f0-9]{64}$' }
+        startedAt: { type: [string, 'null'], format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+        summary: { anyOf: [{ $ref: '#/components/schemas/ImportRunSummary' }, { type: 'null' }] }
+        createdAt: { type: string, format: date-time }
+    ImportRunPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ImportRun' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    ImportRecord:
+      type: object
+      additionalProperties: false
+      required: [id, runId, sourceEntityType, externalId, action, status, errorCode, conflictingGroups, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        runId: { $ref: '#/components/schemas/Uuid' }
+        sourceEntityType: { type: string }
+        externalId: { type: string }
+        action: { $ref: '#/components/schemas/ImportAction' }
+        status: { $ref: '#/components/schemas/ImportRecordStatus' }
+        errorCode: { type: [string, 'null'] }
+        conflictingGroups: { type: array, items: { type: string } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ImportRecordPage:
+      type: object
+      additionalProperties: false
+      required: [items, pageInfo]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ImportRecord' } }
+        pageInfo: { $ref: '#/components/schemas/PageInfo' }
+    ProjectionRebuildCommand:
+      type: object
+      additionalProperties: false
+      required: [scope, productIds]
+      properties:
+        scope: { type: string, enum: [all, product_ids] }
+        productIds: { type: array, maxItems: 1000, uniqueItems: true, items: { $ref: '#/components/schemas/Uuid' } }
+    Operation:
+      type: object
+      additionalProperties: false
+      required: [id, type, state, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        type: { type: string, enum: [product_projection_rebuild, catalog_projection_rebuild] }
+        state: { type: string, enum: [pending, running, succeeded, failed, cancelled] }
+        createdAt: { type: string, format: date-time }
+    ProblemField:
+      type: object
+      additionalProperties: false
+      required: [path, code, message]
+      properties:
+        path: { type: string }
+        code: { type: string }
+        message: { type: string }
+    Problem:
+      type: object
+      additionalProperties: true
+      required: [type, title, status, detail, instance, code, correlationId, retryable]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string, pattern: '^[A-Z0-9_]+$' }
+        correlationId: { type: string }
+        retryable: { type: boolean }
+        errors: { type: array, items: { $ref: '#/components/schemas/ProblemField' } }
+    StaleVersionProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [currentVersion, current]
+          properties:
+            currentVersion: { $ref: '#/components/schemas/Version' }
+            current:
+              type: object
+              additionalProperties: false
+              required: [id, updatedAt]
+              properties:
+                id: { $ref: '#/components/schemas/Uuid' }
+                updatedAt: { type: string, format: date-time }
+                updatedBy: { anyOf: [{ $ref: '#/components/schemas/Uuid' }, { type: 'null' }] }

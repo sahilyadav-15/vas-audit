@@ -2,7 +2,7 @@
 
 ## Overall Status
 
-Phase 1 — Target Architecture & Requirements is complete, and all Phase 1 business decisions are approved. Phase 2A — Technical Foundation & Product Schema Design is complete and awaiting review. The Product/Catalog technical foundation is implementation-ready subject to the stated production validations, but neither target repository is authorized for initialization. No application implementation has started.
+Phase 1 and the approved Phase 2A foundation are complete. Phase 2B — Product/Catalog Contracts and Delivery Specification is complete as documentation and ready for review. Production validation has not been executed, so mappings, fixtures, repository initialization, migrations, and implementation remain blocked. No application implementation has started.
 
 ## Current Architecture
 
@@ -21,7 +21,7 @@ Status: Complete
 Status: Complete
 
 ### Phase 2 — Detailed Data & API Design
-Status: In Progress — Phase 2A design complete; Phase 2B is next
+Status: In Progress — Phase 2A approved; Phase 2B design complete and awaiting review/validation
 
 ### Phase 3 — Build Vastriqo API & Database Foundation
 Status: Not Started
@@ -55,6 +55,9 @@ Status: Not Started
 - Completed `PHASE-1-CONCEPTUAL-ARCHITECTURE.md` across catalog, merchandising, inventory, identity, wishlist, cart, checkout, orders, provider boundaries, admin, migration, API, and database design.
 - Completed `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`, reconciling all earlier unresolved items and closing the Phase 1 gate.
 - Completed `PHASE-2A-TECHNICAL-FOUNDATION-AND-PRODUCT-SCHEMA.md`, selecting the API/admin/database foundations and defining the implementation-ready physical Product/Catalog, minimum Inventory, merchandising projection, handle and import-control schema.
+- Completed `PHASE-2B-PRODUCT-CATALOG-CONTRACTS-AND-DELIVERY-SPECIFICATION.md`, defining public/admin operations, exact DTO semantics, concurrency, invariants, problems, projection/outbox, import/media contracts, admin workflow, and acceptance requirements.
+- Created the normative OpenAPI 3.1 design contract at `contracts/vastriqo-product-catalog-v1.openapi.yaml` with the complete public and admin Product/Catalog surface.
+- Completed `PHASE-2B-READ-ONLY-PRODUCTION-VALIDATION-RUNBOOK.md`, defining source queries, retained evidence, exception categories, measurable thresholds, redaction, and sign-off.
 - Resolved the target as a strict-TypeScript modular monolith with a dedicated transactional relational database, native Vastriqo identities, separate public/customer/admin/integration boundaries, deterministic imports, and no final Shopify/BMS core dependency.
 - Created this living progress report for implementation status and next-step tracking.
 
@@ -76,23 +79,28 @@ Status: Not Started
 - `vastriqo-admin` will use Next.js 16 App Router, React 19, TypeScript 6, Ant Design 6, TanStack Query 5, generated OpenAPI clients, React Hook Form/Zod and a same-origin BFF/session boundary.
 - Native money is stored as signed 64-bit minor units plus ISO currency; public/admin decimal values cross the API as strings with explicit currency.
 - Native UUIDv7 identifiers, a collision-free Product handle/alias namespace, typed external-source mappings, strict aggregate invariants and location-aware inventory replace Shopify/BMS identity and schema coupling.
+- Product/Catalog HTTP contracts use `/api/v1`, direct success resources, RFC 9457-style problems, exact public/admin DTO separation, signed query-bound keyset cursors, and server-side full-result facets.
+- Admin Product changes use scoped commands, strong ETags/`If-Match`, explicit idempotency keys, aggregate transactions, and no automatic stale-write retry.
+- Canonical Product state, its catalog projection and outbox events commit atomically; import uses four explicit modes, per-aggregate transactions and field-group hashes that prevent native admin edits from being overwritten.
+- Product media uses a provider-neutral verified upload/copy boundary; source URLs, provider IDs and native asset keys do not enter public contracts.
 
 ## Approved Business Decisions and Remaining Validation
 
 The authoritative register is `PHASE-1-CLOSURE-AND-DECISION-REGISTER.md`. No Phase 1 business decision remains unresolved. Existing test-era customers, addresses, wishlists, orders, inquiries and newsletter records are explicitly outside migration scope. No broad legal/financial historical migration is required.
 
-Production validation has **not** been completed. Product/catalog, collection, inventory and PostgreSQL deployment inspections remain scheduled checkpoints. Phase 2A has now resolved the framework/database baseline, identifiers, money representation, Product/Catalog schema, admin foundation, testing/observability conventions and initial session boundary. Hosting/provider choices and detailed legal/tax/privacy/consent and post-purchase workflows remain for their relevant later design checkpoints.
+Production validation has **not** been completed. Phase 2B now defines the exact read-only procedure and acceptance thresholds for Product/catalog, Variant topology, handles, SKU/currency, attributes, media/card overrides, collections, inventory and source identities. No Phase 1 business decision remains unresolved. Hosting/provider choices and later commerce/legal workflows remain within their approved deferred boundaries.
 
 ## Implementation Gates
 
-- Phase 2A is ready for review; its technical foundation is sufficient to initialize `vastriqo-api` after explicit approval and authorization.
+- Phase 2A is approved and Phase 2B design is ready for review, but the latest gate requires the Phase 2B production-validation runbook to pass before either repository is initialized.
 - The separate `vastriqo-api` and `vastriqo-admin` repositories do not exist; this is intentional. This documentation task does not authorize either repository to be created.
-- `vastriqo-admin` initialization should wait for Phase 2B's reviewed Product OpenAPI and admin-session contracts so its initial structure is contract-driven.
-- Production validations in the Phase 2A design §21 must complete before affected schema/import constraints are frozen. They are not permission to read or modify production data during this task.
+- Phase 2B documentation is not permission to query production. Validation execution needs separate read-only access authorization and three-owner sign-off.
+- Mapping/fixture freeze, physical migrations and implementation remain blocked until validation passes and Phase 2B/OpenAPI consistency is approved.
+- Repository initialization remains a separate explicit authorization after those gates; neither document completion nor validation success initializes a repository automatically.
 
 ## Next Step
 
-- Review and approve Phase 2A, then execute Phase 2B Product/Catalog contract and delivery design: versioned OpenAPI contracts, command/concurrency sequences, field-level import/reconciliation rules, media contract, admin workflows, session/CSRF/permission threat model, acceptance tests and authorized read-only production validation. Do not initialize either target repository or implement application code without separate authorization.
+- Review the Phase 2B specification and OpenAPI, then separately authorize and execute the read-only production-validation runbook. Resolve or quarantine every failed gate, freeze the approved mapping/fixture contract, and only then consider explicit repository-initialization authorization. Do not implement application code or perform imports during validation.
 
 ## Change Log
 
@@ -119,3 +127,7 @@ Production validation has **not** been completed. Product/catalog, collection, i
 - Selected the API/admin/database/tooling baseline and documented why useful current-repository conventions are retained while BMS coupling and unsafe legacy patterns are rejected.
 - Defined the physical Product/Catalog, Collection, minimum Inventory, projection, handle and deterministic import-control schema, including constraints, indexes, transactions, read/write paths and admin ownership.
 - Recorded remaining production validations, bounded schema risks, deferred choices, the `vastriqo-api` review/authorization gate and the additional Phase 2B contract prerequisite for `vastriqo-admin`.
+- Completed the Phase 2B Product/Catalog delivery specification and normative OpenAPI 3.1 contract without initializing repositories or implementing code.
+- Fixed the public API versioning, DTO, cursor/facet/search/sort, handle redirect, availability and collection/related-read contracts.
+- Fixed scoped admin command, ETag/If-Match, idempotency, invariant, problem-code, projection/outbox, media, import and admin-workflow contracts.
+- Defined the separately authorized read-only production-validation runbook and made its sign-off an explicit prerequisite for mappings, fixtures, repositories, migrations and implementation.
